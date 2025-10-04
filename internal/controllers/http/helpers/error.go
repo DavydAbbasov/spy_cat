@@ -1,4 +1,4 @@
-package handler
+package errors
 
 import "github.com/gin-gonic/gin"
 
@@ -9,9 +9,9 @@ type ErrorPayload struct {
 	} `json:"error"`
 }
 
-func respondError(c *gin.Context, status int, code, msg string) {
+func RespondError(c *gin.Context, status int, code, msg string) {
 	var p ErrorPayload
-	
+
 	p.Error.Code, p.Error.Message = code, msg
-	c.JSON(status, p)
+	c.IndentedJSON(status, p)
 }

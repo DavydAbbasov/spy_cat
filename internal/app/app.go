@@ -3,17 +3,18 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/DavydAbbasov/spy-cat/internal/config"
-	"github.com/DavydAbbasov/spy-cat/internal/controllers/http/validator"
-	postgres "github.com/DavydAbbasov/spy-cat/internal/repository"
+	postgres "github.com/DavydAbbasov/spy-cat/internal/lib/postgresql"
 
-	"github.com/DavydAbbasov/spy-cat/internal/service"
-	"github.com/gin-gonic/gin"
+	catrepository "github.com/DavydAbbasov/spy-cat/internal/repository/postgresql"
+	catservice "github.com/DavydAbbasov/spy-cat/internal/service/cat_service"
+
 	log "github.com/rs/zerolog/log"
 )
 
@@ -22,23 +23,23 @@ func Run() error {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to load config")
 	}
-	db, err := postgres.NewStorage(cfg, cfg.Postgres.DSN())
+	db, err := postgres.NewConn(cfg, cfg.Postgres.DSN())
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect to postgres")
 	}
 	defer db.Close()
 
-	v := validator.NewValidator()
-	catSvc := service.CatService()
-	catHandler := handlers.NewCatHandler(catSvc, v, cfg.HTTP.HandlerTimeout)
+	// repository
+	catRepo := catrepository.NewCatRepository(db)
 
-	r := gin.Default()
-	r.POST("/cats", catHandler.CreateCatHandler)
-	// r.GET("/cats", catHandler.ListCatsHandler)
+	// services
+	catSvc := catservice.NewCatService(catRepo)
 
 	httpServer := &http.Server{
-		Addr:         cfg.HTTP.Addr,
-		Handler:      r,
+		Addr: cfg.HTTP.Addr,
+		Handler: NewRouter(
+			catSvc,
+		),
 		ReadTimeout:  cfg.HTTP.ReadTimeout,
 		WriteTimeout: cfg.HTTP.WriteTimeout,
 		IdleTimeout:  cfg.HTTP.IdleTimeout,
@@ -53,6 +54,8 @@ func Run() error {
 		}
 	}()
 
+	log.Info().Msg(fmt.Sprintf("listening on %s", cfg.HTTP.Addr))
+
 	<-ctx.Done()
 	log.Info().Msg("shutting down server gracefully")
 
@@ -64,10 +67,6 @@ func Run() error {
 	if err := httpServer.Shutdown(shutdownCtx); err != nil {
 		log.Error().Err(err).Msg("failed to shutdown server")
 	}
-
-	// if err = envBox.Close(); err != nil {
-	// 	log.Error().Err(err).Msg("failed to close connections")
-	// }
 
 	log.Info().Msg("server gracefully shutdown")
 

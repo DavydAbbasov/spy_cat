@@ -7,3 +7,11 @@ type Cat struct {
 	Breed           string  `json:"breed"`
 	Salary          float64 `json:"salary"`
 }
+type ListCatsParams struct {
+	Name     *string
+	Breed    *string
+	MinYears *int
+	MaxYears *int
+	Limit    int
+	Offset   int
+}

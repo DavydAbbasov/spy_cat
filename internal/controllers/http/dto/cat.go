@@ -1,5 +1,7 @@
 package dto
 
+import "github.com/DavydAbbasov/spy-cat/internal/domain"
+
 type CreateCatRequest struct {
 	Name            string  `json:"name"              validate:"required,min=2,max=64"`
 	YearsExperience int64   `json:"years_experience"  validate:"required,min=0,max=60"`
@@ -9,4 +11,19 @@ type CreateCatRequest struct {
 
 type CreateCatResponse struct {
 	ID int64 `json:"id"`
+}
+type GetCatsQuery struct {
+	Name     *string `query:"name" validate:"omitempty,min=1"`
+	Breed    *string `query:"breed" validate:"omitempty,min=1"`
+	MinYears *int    `query:"min_years" validate:"omitempty,min=0"`
+	MaxYears *int    `query:"max_years" validate:"omitempty,min=0,gtfield=MinYears"`
+	Limit    int     `query:"limit" validate:"min=1,max=200"`
+	Offset   int     `query:"offset" validate:"min=0"`
+}
+type GetCatsResponse struct {
+	Items      []domain.Cat `json:"items"`
+	Total      int64        `json:"total"`
+	Limit      int          `json:"limit"`
+	Offset     int          `json:"offset"`
+	NextOffset int          `json:"next_offset"`
 }
