@@ -1,2 +1,2 @@
-package router
+package app
 //Маршрутизация Gin
