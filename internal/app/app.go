@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/DavydAbbasov/spy-cat/config"
+	"github.com/DavydAbbasov/spy-cat/internal/config"
 	"github.com/DavydAbbasov/spy-cat/internal/controllers/http/validator"
 	postgres "github.com/DavydAbbasov/spy-cat/internal/repository"
 

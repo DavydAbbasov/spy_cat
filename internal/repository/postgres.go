@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/DavydAbbasov/spy-cat/config"
+	"github.com/DavydAbbasov/spy-cat/internal/config"
 	_ "github.com/lib/pq"
 	log "github.com/rs/zerolog/log"
 	// _ "github.com/tommy-muehle/go-mnd/v2/config"
