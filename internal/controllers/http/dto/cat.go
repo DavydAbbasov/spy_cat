@@ -13,12 +13,12 @@ type CreateCatResponse struct {
 	ID int64 `json:"id"`
 }
 type GetCatsQuery struct {
-	Name     *string `query:"name" validate:"omitempty,min=1"`
-	Breed    *string `query:"breed" validate:"omitempty,min=1"`
-	MinYears *int    `query:"min_years" validate:"omitempty,min=0"`
-	MaxYears *int    `query:"max_years" validate:"omitempty,min=0,gtfield=MinYears"`
-	Limit    int     `query:"limit" validate:"min=1,max=200"`
-	Offset   int     `query:"offset" validate:"min=0"`
+	Name     *string `form:"name"       binding:"omitempty,min=1"`
+	Breed    *string `form:"breed"      binding:"omitempty,min=1"`
+	MinYears *int    `form:"min_years"  binding:"omitempty,min=0"`
+	MaxYears *int    `form:"max_years"  binding:"omitempty,min=0,gtefield=MinYears"`
+	Limit    int     `form:"limit,default=10"  binding:"omitempty,min=1,max=200"`
+	Offset   int     `form:"offset,default=0"  binding:"omitempty,min=0"`
 }
 type GetCatsResponse struct {
 	Items      []domain.Cat `json:"items"`

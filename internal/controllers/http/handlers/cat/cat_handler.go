@@ -106,7 +106,6 @@ func (h *CatHandler) GetCat() gin.HandlerFunc {
 			}
 			return
 		}
-		c.Header("Location", fmt.Sprintf("/cats/%d", cat.ID))
 		c.JSON(http.StatusOK, cat)
 	}
 

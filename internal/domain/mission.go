@@ -1,2 +1,1 @@
 package domain
-// Модель миссии

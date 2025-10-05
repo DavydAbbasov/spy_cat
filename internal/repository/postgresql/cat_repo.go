@@ -44,7 +44,7 @@ func (r *CatRepository) ListCats(ctx context.Context, p domain.ListCatsParams) (
 		p.Offset = 0
 	}
 
-	const q = `
+	 q := `
 		SELECT id, name, years_experience, breed, salary
 		FROM cats
 		ORDER BY id DESC

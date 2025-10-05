@@ -2,8 +2,11 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"strings"
+
+	servieserrors "github.com/DavydAbbasov/spy-cat/internal/servies_errors"
 
 	"github.com/DavydAbbasov/spy-cat/internal/domain"
 )
@@ -34,11 +37,21 @@ func (s *catService) CreateCat(ctx context.Context, cat *domain.Cat) (int64, err
 
 	return s.repo.CreateCat(ctx, cat)
 }
+
 func (s *catService) GetCat(ctx context.Context, id int64) (domain.Cat, error) {
 	if id <= 0 {
 		return domain.Cat{}, errors.New("invalid id")
 	}
-	return s.repo.GetCat(ctx, id)
+
+	cat, err := s.repo.GetCat(ctx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.Cat{}, servieserrors.ErrCatNotFound
+		}
+		return domain.Cat{}, err
+	}
+
+	return cat, nil
 }
 func (s *catService) ListCats(ctx context.Context, p domain.ListCatsParams) ([]domain.Cat, error) {
 

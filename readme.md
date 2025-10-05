@@ -18,6 +18,17 @@ App runs at [http://localhost:8080](http://localhost:8080)
 Open in browser:
 [http://localhost:8080/swagger/index.html](http://localhost:8080/swagger/index.html)
 
+## 🐾 Seeding demo data
+
+You can optionally fill the database with demo cats from
+TheCatAPI (https://api.thecatapi.com/v1/breeds)
+
+# 1 Launch services (if not already running)
+docker compose up -d --build
+
+#  Execute
+docker compose run --rm seed
+
 
 ## ⚙️ Stack
 
