@@ -29,6 +29,7 @@ Open in browser:
 
 ## 🗂 Project structure
 
+``` text
 cmd/                     # Entrypoints
   ├── app/               # Main application
   └── migrator/          # DB migration
@@ -48,10 +49,11 @@ internal/                # Internal application modules
   ├── helpers/           # Error helpers
   ├── middleware/        # Middleware
   ├── validator/         # Validation
-  ├── domain/            # Core domain models 
+  ├── domain/            # Core domain models
   ├── lib/               # Shared libraries (PostgreSQL connection, etc.)
   ├── repository/        # Data access  (PostgreSQL repos)
   ├── service/           # Business logic
   └── services_errors/   # Centralized service errors
 
 migrations/              # SQL migrations
+```
