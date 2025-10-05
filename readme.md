@@ -7,15 +7,15 @@ The project demonstrates clean architecture, structured modules, migrations, and
 Everything can be set up with just two commands.
 
 ``` text
-# 1. Copy environment and start containers
+1. Copy environment and start containers
 cp .env.example .env && docker compose up -d --build
 
-# 2. Apply database migrations
+2. Apply database migrations
 docker compose run --rm migrate up
 
-**App** runs at [http://localhost:8080](http://localhost:8080)
+App runs at [http://localhost:8080](http://localhost:8080)
 
-**Swagger**
+Swagger
 Open in browser:
 [http://localhost:8080/swagger/index.html](http://localhost:8080/swagger/index.html)
 ```
@@ -25,12 +25,12 @@ Open in browser:
 You can optionally fill the database with demo cats from
 **TheCatAPI** (https://api.thecatapi.com/v1/breeds)
 
-# 1. Make sure services are running
+1. Make sure services are running
 docker compose up -d --build
-# 2. Run the seeder
+2. Run the seeder
 docker compose run --rm seed
 
-**Example output:**
+Example output:
 200! Cornish Rex (exp=15, salary=2139)
 200! Cymric (exp=14, salary=4386)
 Done.
