@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: spycat-db
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: ${PG_DBNAME}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER} -d ${PG_DBNAME}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spycat-app
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      PG_HOST: db
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  migrate:
+    image: migrate/migrate:4
+    container_name: spycat-migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    volumes:
+      - ./migrations:/migrations
+    entrypoint:
+      [
+        "migrate",
+        "-path=/migrations",
+        "-database=postgres://${PG_USER}:${PG_PASSWORD}@db:${PG_PORT}/${PG_DBNAME}?sslmode=${PG_SSLMODE}",
+      ]
+
+volumes:
+  pgdata:

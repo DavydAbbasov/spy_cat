@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/DavydAbbasov/spy-cat/internal/config"
+	_ "github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 )
 

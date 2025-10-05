@@ -11,6 +11,7 @@ import (
 
 	"github.com/DavydAbbasov/spy-cat/internal/config"
 	postgres "github.com/DavydAbbasov/spy-cat/internal/lib/postgresql"
+	"github.com/joho/godotenv"
 
 	catrepository "github.com/DavydAbbasov/spy-cat/internal/repository/postgresql"
 	catservice "github.com/DavydAbbasov/spy-cat/internal/service/cat_service"
@@ -19,6 +20,7 @@ import (
 )
 
 func Run() error {
+	_ = godotenv.Load(".env")
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to load config")
