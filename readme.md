@@ -6,6 +6,7 @@ The project demonstrates clean architecture, structured modules, migrations, and
 ## Quick Start
 Everything can be set up with just two commands.
 
+``` text
 # 1. Copy environment and start containers
 cp .env.example .env && docker compose up -d --build
 
@@ -17,9 +18,10 @@ docker compose run --rm migrate up
 **Swagger**
 Open in browser:
 [http://localhost:8080/swagger/index.html](http://localhost:8080/swagger/index.html)
+```
 
 ## 🐾 Seeding demo data
-
+``` text
 You can optionally fill the database with demo cats from
 **TheCatAPI** (https://api.thecatapi.com/v1/breeds)
 
@@ -32,7 +34,7 @@ docker compose run --rm seed
 200! Cornish Rex (exp=15, salary=2139)
 200! Cymric (exp=14, salary=4386)
 Done.
-
+```
 
 ## ⚙️ Stack
 * **Language:** Go 1.24
@@ -42,16 +44,19 @@ Done.
 * **Docs:** Swagger (swaggo)
 
 ## 📚 API Documentation
+
+```text
 The API uses auto-generated OpenAPI (Swagger) schema.
 You can test endpoints directly in the browser:
 
 Swagger : http://localhost:8080/swagger/index.html
 Raw spec: http://localhost:8080/swagger/doc.json
-
+```
 
 ## Environment
 Use .env.example as a base:
 
+```text
 APP_PORT=8080
 
 DB_HOST=postgres
@@ -60,7 +65,7 @@ DB_USER=postgres
 DB_PASSWORD=changeme
 DB_NAME=spy_cat
 DB_SSLMODE=disable
-
+```
 ## 🗂 Project structure
 
 ``` text
@@ -93,7 +98,7 @@ migrations/              # SQL migrations
 ```
 
 ## Development Tips
-
+``` text
 1) View logs
 docker compose logs -f app
 
@@ -106,3 +111,4 @@ docker compose up -d --build
 
 4) Stop and clean up
 docker compose down
+```
