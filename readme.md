@@ -1,7 +1,8 @@
 ## Spy Cat API
 🐱
-A fully Dockerized REST API built with Go (Gin) and PostgreSQL.
-The project demonstrates clean architecture, structured modules, migrations, and Swagger-based documentation.
+A REST API in Go (Gin) with PostgreSQL.
+The project ships with Docker Compose (app + Postgres + migrations),
+clean module structure, database migrations, and Swagger/OpenAPI docs.
 
 ## Quick Start
 Everything can be set up with just two commands.
