@@ -114,7 +114,7 @@ func (h *CatHandler) GetCat() gin.HandlerFunc {
 
 // List spy cats
 // @Summary      List spy cats
-// @Description  Возможность просматривать список котов
+// @Description  ability to view the list of cats
 // @Tags         cats
 // @Param        limit      query int    false "Limit" minimum(1) maximum(200)
 // @Param        offset     query int    false "Offset" minimum(0)
@@ -127,46 +127,41 @@ func (h *CatHandler) GetCat() gin.HandlerFunc {
 // @Failure      400 {object} dto.ErrorResponse
 // @Failure      500 {object} dto.ErrorResponse
 // @Router       /cats [get]
-// func (h *CatHandler) GetCats() gin.HandlerFunc {
-// 	return func(c *gin.Context) {
-// 		ctx := c.Request.Context()
+func (h *CatHandler) GetCats() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
 
-// 		// 1) Парсим и валидируем query
-// 		q, err := validator.DecodeQuery[dto.GetCatsQuery](h.validator, c.Request)
-// 		if err != nil {
-// 			if errors.Is(err, validator.ErrHandlerValidationFailed) {
-// 				respondError(c, http.StatusBadRequest, "invalid_query", err.Error())
-// 				return
-// 			}
-// 			respondError(c, http.StatusInternalServerError, "internal", "internal server error")
-// 			return
-// 		}
-// 		// дефолты (если не выставляешь их в DecodeQuery)
-// 		if q.Limit == 0 {
-// 			q.Limit = 50
-// 		}
-// 		// 2) Готовим параметры домена
-// 		params := domain.ListCatsParams{
-// 			Name:     q.Name,
-// 			Breed:    q.Breed,
-// 			MinYears: q.MinYears,
-// 			MaxYears: q.MaxYears,
-// 			Limit:    q.Limit,
-// 			Offset:   q.Offset,
-// 		}
-// 		// 3) Вызываем сервис
-// 		items, total, err := h.svc.ListCats(ctx, params)
-// 		if err != nil {
-// 			respondError(c, http.StatusInternalServerError, "internal", "internal server error")
-// 			return
-// 		}
-// 		// 4) Ответ (используем domain.Cat напрямую, как ты хотел)
-// 		c.JSON(http.StatusOK, dto.GetCatsResponse{
-// 			Items:      items,
-// 			Total:      total,
-// 			Limit:      q.Limit,
-// 			Offset:     q.Offset,
-// 			NextOffset: q.Offset + len(items),
-// 		})
-// 	}
-// }
+		var q dto.GetCatsQuery
+		if err := c.ShouldBindQuery(&q); err != nil {
+			httperror.RespondError(c, http.StatusBadRequest, "invalid_query", err.Error())
+			return
+		}
+
+		if err := h.validator.Validate(q); err != nil {
+			httperror.RespondError(c, http.StatusBadRequest, "validation_error", err.Error())
+			return
+		}
+
+		params := domain.ListCatsParams{
+			Name:     q.Name,
+			Breed:    q.Breed,
+			MinYears: q.MinYears,
+			MaxYears: q.MaxYears,
+			Limit:    q.Limit,
+			Offset:   q.Offset,
+		}
+
+		items, err := h.svc.ListCats(ctx, params)
+		if err != nil {
+			httperror.RespondError(c, http.StatusInternalServerError, "internal", "internal server error")
+			return
+		}
+
+		c.JSON(http.StatusOK, dto.GetCatsResponse{
+			Items:      items,
+			Limit:      q.Limit,
+			Offset:     q.Offset,
+			NextOffset: q.Offset + len(items),
+		})
+	}
+}

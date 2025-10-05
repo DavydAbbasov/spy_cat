@@ -8,14 +8,12 @@ import (
 
 func Swagger() gin.HandlerFunc {
 	handler := httpSwagger.Handler(
-		httpSwagger.URL("doc.json"),
+		httpSwagger.URL("/swagger/doc.json"),
 		httpSwagger.DocExpansion("none"),
 		httpSwagger.DeepLinking(true),
 		httpSwagger.DomID("swagger-ui"),
 	)
-
 	return func(c *gin.Context) {
 		handler.ServeHTTP(c.Writer, c.Request)
-		
 	}
 }

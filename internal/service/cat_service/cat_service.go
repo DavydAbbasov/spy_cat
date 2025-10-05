@@ -10,11 +10,12 @@ import (
 
 type CatService interface {
 	CreateCat(ctx context.Context, cat *domain.Cat) (int64, error)
-	// ListCats(ctx context.Context, p domain.ListCatsParams) ([]domain.Cat, int64, error)
+	ListCats(ctx context.Context, p domain.ListCatsParams) ([]domain.Cat, error)
 	GetCat(ctx context.Context, id int64) (domain.Cat, error)
 }
 type CatRepository interface {
 	CreateCat(ctx context.Context, cat *domain.Cat) (int64, error)
+	ListCats(ctx context.Context, p domain.ListCatsParams) ([]domain.Cat, error)
 	GetCat(ctx context.Context, id int64) (domain.Cat, error)
 }
 type catService struct {
@@ -38,4 +39,12 @@ func (s *catService) GetCat(ctx context.Context, id int64) (domain.Cat, error) {
 		return domain.Cat{}, errors.New("invalid id")
 	}
 	return s.repo.GetCat(ctx, id)
+}
+func (s *catService) ListCats(ctx context.Context, p domain.ListCatsParams) ([]domain.Cat, error) {
+
+	if p.MinYears != nil && p.MaxYears != nil && *p.MinYears > *p.MaxYears {
+		return nil, errors.New("min years cannot be greater than max years")
+	}
+
+	return s.repo.ListCats(ctx, p)
 }

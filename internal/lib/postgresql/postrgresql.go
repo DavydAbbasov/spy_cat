@@ -1,4 +1,3 @@
-
 package postgresql
 
 import (
@@ -10,7 +9,7 @@ import (
 )
 
 func NewConn(cfg *config.Config, dsn string) (*sql.DB, error) {
-	db, err := sql.Open("postgres", cfg.Postgres.DSN())
+	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("error get database driver %w", err)
 	}

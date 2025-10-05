@@ -82,7 +82,6 @@ func logResponse(c *gin.Context, w *bodyLogWriter, startTime time.Time) {
 			}
 		}
 
-		// Логируем с разным уровнем в зависимости от статус кода
 		status := c.Writer.Status()
 		switch {
 		case status >= 500:

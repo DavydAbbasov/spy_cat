@@ -22,8 +22,13 @@ type GetCatsQuery struct {
 }
 type GetCatsResponse struct {
 	Items      []domain.Cat `json:"items"`
-	Total      int64        `json:"total"`
 	Limit      int          `json:"limit"`
 	Offset     int          `json:"offset"`
 	NextOffset int          `json:"next_offset"`
+}
+
+type ErrorResponse struct {
+	Code    string      `json:"code"    example:"INVALID_INPUT"`
+	Message string      `json:"message" example:"validation error"`
+	Details interface{} `json:"details,omitempty"`
 }

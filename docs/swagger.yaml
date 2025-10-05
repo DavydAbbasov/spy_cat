@@ -1,0 +1,174 @@
+definitions:
+  domain.Cat:
+    properties:
+      breed:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      salary:
+        type: number
+      years_experience:
+        type: integer
+    type: object
+  dto.CreateCatRequest:
+    properties:
+      breed:
+        type: string
+      name:
+        maxLength: 64
+        minLength: 2
+        type: string
+      salary:
+        maximum: 1000000
+        minimum: 0
+        type: number
+      years_experience:
+        maximum: 60
+        minimum: 0
+        type: integer
+    required:
+    - breed
+    - name
+    - salary
+    - years_experience
+    type: object
+  dto.CreateCatResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  dto.ErrorResponse:
+    properties:
+      code:
+        example: INVALID_INPUT
+        type: string
+      details: {}
+      message:
+        example: validation error
+        type: string
+    type: object
+  dto.GetCatsResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/domain.Cat'
+        type: array
+      limit:
+        type: integer
+      next_offset:
+        type: integer
+      offset:
+        type: integer
+    type: object
+info:
+  contact: {}
+paths:
+  /cats:
+    get:
+      description: ability to view the list of cats
+      parameters:
+      - description: Limit
+        in: query
+        maximum: 200
+        minimum: 1
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      - description: Filter by name
+        in: query
+        name: name
+        type: string
+      - description: Filter by breed
+        in: query
+        name: breed
+        type: string
+      - description: Min experience
+        in: query
+        name: min_years
+        type: integer
+      - description: Max experience
+        in: query
+        name: max_years
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetCatsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: List spy cats
+      tags:
+      - cats
+  /cats/{id}:
+    get:
+      description: The ability to receive information about a single cat
+      parameters:
+      - description: ID Cat
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Cat'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get a single spy cat
+      tags:
+      - cats
+  /cats/create:
+    post:
+      consumes:
+      - application/json
+      description: Used to create a new spy cat
+      parameters:
+      - description: Request to create a cat
+        in: body
+        name: CreateCatRequest
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateCatRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.CreateCatResponse'
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      summary: Create a new spy cat
+      tags:
+      - Cats
+swagger: "2.0"

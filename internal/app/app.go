@@ -36,10 +36,8 @@ func Run() error {
 	catSvc := catservice.NewCatService(catRepo)
 
 	httpServer := &http.Server{
-		Addr: cfg.HTTP.Addr,
-		Handler: NewRouter(
-			catSvc,
-		),
+		Addr:         cfg.HTTP.Addr,
+		Handler:      NewRouter(catSvc),
 		ReadTimeout:  cfg.HTTP.ReadTimeout,
 		WriteTimeout: cfg.HTTP.WriteTimeout,
 		IdleTimeout:  cfg.HTTP.IdleTimeout,
