@@ -7,7 +7,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 )
-
+//add PingHandler godoc
 func Ping() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if _, err := io.WriteString(c.Writer, "working as well"); err != nil {

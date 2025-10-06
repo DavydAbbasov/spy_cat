@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/DavydAbbasov/spy-cat/internal/domain"
-	servieserrors "github.com/DavydAbbasov/spy-cat/internal/servies_errors"
+	serviceserrors "github.com/DavydAbbasov/spy-cat/internal/servies_errors"
 	"github.com/gin-gonic/gin"
 
 	"github.com/DavydAbbasov/spy-cat/internal/controllers/http/dto"
@@ -30,7 +30,7 @@ func NewCatHandler(svc catservice.CatService, validator *validator.Validator) *C
 }
 
 // @Summary Create a new spy cat
-// @Tags Cats
+// @Tags cats
 // @Description Used to create a new spy cat
 // @Accept json
 // @Produce json
@@ -54,15 +54,12 @@ func (h *CatHandler) CreateCat() gin.HandlerFunc {
 			return
 		}
 
-		id, err := h.svc.CreateCat(ctx, &domain.Cat{
-			Name:            req.Name,
-			YearsExperience: req.YearsExperience,
-			Breed:           req.Breed,
-			Salary:          req.Salary,
-		})
+		cat := dto.ToNewCatDomain(*req)
+
+		id, err := h.svc.CreateCat(ctx, &cat)
 		if err != nil {
 			switch {
-			case errors.Is(err, servieserrors.ErrBreedInvalid):
+			case errors.Is(err, serviceserrors.ErrBreedInvalid):
 				httperror.RespondError(c, http.StatusBadRequest, "invalid_breed", "breed is not allowed")
 				return
 			default:
@@ -81,7 +78,7 @@ func (h *CatHandler) CreateCat() gin.HandlerFunc {
 // @Tags         cats
 // @Param        id   path int true "ID Cat"
 // @Produce      json
-// @Success      200 {object} domain.Cat
+// @Success      200 {object} dto.CatResponse
 // @Failure      400 {object} dto.ErrorResponse
 // @Failure      404 {object} dto.ErrorResponse
 // @Failure      500 {object} dto.ErrorResponse
@@ -104,14 +101,14 @@ func (h *CatHandler) GetCat() gin.HandlerFunc {
 		cat, err := h.svc.GetCat(ctx, id)
 		if err != nil {
 			switch {
-			case errors.Is(err, servieserrors.ErrCatNotFound):
+			case errors.Is(err, serviceserrors.ErrCatNotFound):
 				httperror.RespondError(c, http.StatusNotFound, "not_found", "cat not found")
 			default:
 				httperror.RespondError(c, http.StatusInternalServerError, "internal", "internal server error")
 			}
 			return
 		}
-		c.JSON(http.StatusOK, cat)
+		c.JSON(http.StatusOK, dto.ToCatResponse(cat))
 	}
 
 }
@@ -161,12 +158,17 @@ func (h *CatHandler) GetCats() gin.HandlerFunc {
 			return
 		}
 
+		next := 0
+		if len(items) == q.Limit {
+			next = q.Offset + q.Limit
+		}
 		c.JSON(http.StatusOK, dto.GetCatsResponse{
-			Items:      items,
+			Items:      dto.ToCatResponses(items),
 			Limit:      q.Limit,
 			Offset:     q.Offset,
-			NextOffset: q.Offset + len(items),
+			NextOffset: next,
 		})
+
 	}
 }
 
@@ -199,7 +201,7 @@ func (h *CatHandler) DeleteCat() gin.HandlerFunc {
 		_, err = h.svc.DeleteCat(ctx, id)
 		if err != nil {
 			switch {
-			case errors.Is(err, servieserrors.ErrCatNotFound):
+			case errors.Is(err, serviceserrors.ErrCatNotFound):
 				httperror.RespondError(c, http.StatusNotFound, "not found", "cat not found")
 			default:
 				httperror.RespondError(c, http.StatusInternalServerError, "internal", "internal server error")
@@ -210,4 +212,57 @@ func (h *CatHandler) DeleteCat() gin.HandlerFunc {
 		c.JSON(http.StatusOK, dto.DeleteCatResponse{Deleted: true, ID: id})
 	}
 
+}
+// Update salary
+// @Summary      Update cat salary
+// @Description  Updates salary for a specific cat
+// @Tags         cats
+// @Accept       json
+// @Produce      json
+// @Param        id   path  int true "Cat ID"
+// @Param        body body  dto.UpdateSalaryRequest true "New salary"
+// @Success      200  {object} dto.CatResponse
+// @Failure      400  {object} dto.ErrorResponse
+// @Failure      404  {object} dto.ErrorResponse
+// @Failure      500  {object} dto.ErrorResponse
+// @Router       /cats/{id}/salary [patch]
+func (h *CatHandler) UpdateSalary() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        ctx := c.Request.Context()
+
+        id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+        if err != nil || id <= 0 {
+            httperror.RespondError(c, http.StatusBadRequest, "invalid_path", "id must be a positive integer")
+            return
+        }
+
+        req, err := validator.DecodeJSON[dto.UpdateSalaryRequest](h.validator, c.Request)
+        if err != nil {
+            if errors.Is(err, validator.ErrHandlerValidationFailed) {
+                httperror.RespondError(c, http.StatusBadRequest, "invalid_body", err.Error())
+                return
+            }
+            httperror.RespondError(c, http.StatusBadRequest, "invalid_json", "invalid json body")
+            return
+        }
+
+        cat, err := h.svc.UpdateSalary(ctx, domain.UpdateSalaryParams{
+            ID: id,
+			Salary: req.Salary,
+        })
+
+        if err != nil {
+            switch {
+            case errors.Is(err, serviceserrors.ErrCatNotFound):
+                httperror.RespondError(c, http.StatusNotFound, "not_found", "cat not found")
+            case errors.Is(err, serviceserrors.ErrInvalidSalary):
+                httperror.RespondError(c, http.StatusBadRequest, "invalid_salary", "salary must be >= 0")
+            default:
+                httperror.RespondError(c, http.StatusInternalServerError, "internal", "internal server error")
+            }
+            return
+        }
+
+        c.JSON(http.StatusOK, dto.ToCatResponse(cat))
+    }
 }

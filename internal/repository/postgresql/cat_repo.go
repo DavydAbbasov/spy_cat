@@ -3,9 +3,11 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/DavydAbbasov/spy-cat/internal/domain"
+	servieserrors "github.com/DavydAbbasov/spy-cat/internal/servies_errors"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -24,7 +26,7 @@ func (r *CatRepository) CreateCat(ctx context.Context, c *domain.Cat) (int64, er
 	q := `
 		INSERT INTO cats(name, years_experience, breed, salary)
 		VALUES ($1,$2,$3,$4)
-		RETURNING id`
+		RETURNING id;`
 
 	err := r.db.QueryRowContext(ctx, q, c.Name, c.YearsExperience, c.Breed, c.Salary).Scan(&id)
 	return id, err
@@ -34,7 +36,7 @@ func (r *CatRepository) GetCat(ctx context.Context, id int64) (domain.Cat, error
 
 	q := `SELECT id, name, years_experience, breed, salary
 	      FROM cats
-		  WHERE id = $1`
+		  WHERE id = $1;`
 
 	err := r.db.QueryRowContext(ctx, q, id).Scan(&c.ID, &c.Name, &c.YearsExperience, &c.Breed, &c.Salary)
 	return c, err
@@ -94,4 +96,29 @@ func (r *CatRepository) DeleteCat(ctx context.Context, id int64) (int64, error) 
 	}
 	n, _ := res.RowsAffected()
 	return n, err
+}
+func (r *CatRepository) UpdateSalary(ctx context.Context, id int64, salary float64) (domain.Cat, error) {
+	q := `
+	UPDATE cats
+	SET salary = $1
+	WHERE id = $2
+	RETURNING id, name, years_experience, breed, salary
+	;`
+
+	var c domain.Cat
+	err := r.db.QueryRowContext(ctx, q, salary, id).
+		Scan(
+			&c.ID,
+			&c.Name,
+			&c.YearsExperience,
+			&c.Breed,
+			&c.Salary,
+		)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.Cat{}, servieserrors.ErrCatNotFound
+		}
+		return domain.Cat{}, err
+	}
+	return c, nil
 }

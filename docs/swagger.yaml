@@ -1,5 +1,5 @@
 definitions:
-  domain.Cat:
+  dto.CatResponse:
     properties:
       breed:
         type: string
@@ -66,7 +66,7 @@ definitions:
     properties:
       items:
         items:
-          $ref: '#/definitions/domain.Cat'
+          $ref: '#/definitions/dto.CatResponse'
         type: array
       limit:
         type: integer
@@ -74,6 +74,15 @@ definitions:
         type: integer
       offset:
         type: integer
+    type: object
+  dto.UpdateSalaryRequest:
+    properties:
+      salary:
+        maximum: 1000000
+        minimum: 0
+        type: number
+    required:
+    - salary
     type: object
 info:
   contact: {}
@@ -172,7 +181,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.Cat'
+            $ref: '#/definitions/dto.CatResponse'
         "400":
           description: Bad Request
           schema:
@@ -186,6 +195,45 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Get a single spy cat
+      tags:
+      - cats
+  /cats/{id}/salary:
+    patch:
+      consumes:
+      - application/json
+      description: Updates salary for a specific cat
+      parameters:
+      - description: Cat ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: New salary
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateSalaryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.CatResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Update cat salary
       tags:
       - cats
   /cats/create:
@@ -217,5 +265,5 @@ paths:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Create a new spy cat
       tags:
-      - Cats
+      - cats
 swagger: "2.0"

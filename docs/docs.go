@@ -98,7 +98,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Cats"
+                    "cats"
                 ],
                 "summary": "Create a new spy cat",
                 "parameters": [
@@ -157,7 +157,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/domain.Cat"
+                            "$ref": "#/definitions/dto.CatResponse"
                         }
                     },
                     "400": {
@@ -225,10 +225,69 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/cats/{id}/salary": {
+            "patch": {
+                "description": "Updates salary for a specific cat",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cats"
+                ],
+                "summary": "Update cat salary",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Cat ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New salary",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateSalaryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CatResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
-        "domain.Cat": {
+        "dto.CatResponse": {
             "type": "object",
             "properties": {
                 "breed": {
@@ -323,7 +382,7 @@ const docTemplate = `{
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/domain.Cat"
+                        "$ref": "#/definitions/dto.CatResponse"
                     }
                 },
                 "limit": {
@@ -334,6 +393,19 @@ const docTemplate = `{
                 },
                 "offset": {
                     "type": "integer"
+                }
+            }
+        },
+        "dto.UpdateSalaryRequest": {
+            "type": "object",
+            "required": [
+                "salary"
+            ],
+            "properties": {
+                "salary": {
+                    "type": "number",
+                    "maximum": 1000000,
+                    "minimum": 0
                 }
             }
         }

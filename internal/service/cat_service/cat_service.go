@@ -16,19 +16,23 @@ type CatService interface {
 	ListCats(ctx context.Context, p domain.ListCatsParams) ([]domain.Cat, error)
 	GetCat(ctx context.Context, id int64) (domain.Cat, error)
 	DeleteCat(ctx context.Context, id int64) (int64, error)
+	UpdateSalary(ctx context.Context, p domain.UpdateSalaryParams) (domain.Cat, error)
 }
 type CatRepository interface {
 	CreateCat(ctx context.Context, cat *domain.Cat) (int64, error)
 	ListCats(ctx context.Context, p domain.ListCatsParams) ([]domain.Cat, error)
 	GetCat(ctx context.Context, id int64) (domain.Cat, error)
 	DeleteCat(ctx context.Context, id int64) (int64, error)
+	UpdateSalary(ctx context.Context, id int64, salary float64) (domain.Cat, error)
 }
 type catService struct {
 	repo CatRepository
 }
 
 func NewCatService(repo CatRepository) CatService {
-	return &catService{repo: repo}
+	return &catService{
+		repo: repo,
+	}
 }
 
 func (s *catService) CreateCat(ctx context.Context, cat *domain.Cat) (int64, error) {
@@ -77,4 +81,14 @@ func (s *catService) DeleteCat(ctx context.Context, id int64) (int64, error) {
 		return 0, servieserrors.ErrCatNotFound
 	}
 	return 0, nil
+}
+func (s *catService) UpdateSalary(ctx context.Context, p domain.UpdateSalaryParams) (domain.Cat, error) {
+	if p.ID <= 0 {
+		return domain.Cat{}, errors.New("invalid id")
+	}
+
+	if p.Salary < 0 || p.Salary > 1_000_000 {
+		return domain.Cat{}, servieserrors.ErrInvalidSalary
+	}
+	return s.repo.UpdateSalary(ctx, p.ID, p.Salary)
 }

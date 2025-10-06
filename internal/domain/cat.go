@@ -1,11 +1,11 @@
 package domain
 
 type Cat struct {
-	ID              int64   `json:"id"`
-	Name            string  `json:"name"`
-	YearsExperience int64   `json:"years_experience"`
-	Breed           string  `json:"breed"`
-	Salary          float64 `json:"salary"`
+	ID              int64
+	Name            string
+	YearsExperience int64
+	Breed           string
+	Salary          float64
 }
 type ListCatsParams struct {
 	Name     *string
@@ -14,4 +14,8 @@ type ListCatsParams struct {
 	MaxYears *int
 	Limit    int
 	Offset   int
+}
+type UpdateSalaryParams struct {
+    ID     int64
+    Salary float64
 }
