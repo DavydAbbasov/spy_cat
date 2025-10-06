@@ -32,3 +32,7 @@ type ErrorResponse struct {
 	Message string      `json:"message" example:"validation error"`
 	Details interface{} `json:"details,omitempty"`
 }
+type DeleteCatResponse struct {
+    Deleted bool  `json:"deleted"`
+    ID      int64 `json:"id"`
+}

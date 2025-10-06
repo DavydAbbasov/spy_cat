@@ -39,6 +39,13 @@ definitions:
       id:
         type: integer
     type: object
+  dto.DeleteCatResponse:
+    properties:
+      deleted:
+        type: boolean
+      id:
+        type: integer
+    type: object
   dto.ErrorResponse:
     properties:
       code:
@@ -115,6 +122,36 @@ paths:
       tags:
       - cats
   /cats/{id}:
+    delete:
+      description: Deletes a cat by id
+      parameters:
+      - description: Cat ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DeleteCatResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Delete cat
+      tags:
+      - cats
     get:
       description: The ability to receive information about a single cat
       parameters:

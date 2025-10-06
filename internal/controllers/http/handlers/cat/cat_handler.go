@@ -59,7 +59,6 @@ func (h *CatHandler) CreateCat() gin.HandlerFunc {
 			Breed:           req.Breed,
 			Salary:          req.Salary,
 		})
-
 		if err != nil {
 			httperror.RespondError(c, http.StatusInternalServerError, "internal", "internal server error")
 			return
@@ -163,4 +162,46 @@ func (h *CatHandler) GetCats() gin.HandlerFunc {
 			NextOffset: q.Offset + len(items),
 		})
 	}
+}
+
+// DeleteCat godoc
+// @Summary      Delete cat
+// @Description  Deletes a cat by id
+// @Tags         cats
+// @Produce      json
+// @Param        id   path      int  true  "Cat ID"
+// @Success      200  {object}  dto.DeleteCatResponse "OK"
+// @Failure      400  {object}  dto.ErrorResponse
+// @Failure      404  {object}  dto.ErrorResponse
+// @Failure      500  {object}  dto.ErrorResponse
+// @Router       /cats/{id} [delete]
+func (h *CatHandler) DeleteCat() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+
+		idStr := c.Param("id")
+		if idStr == "" {
+			httperror.RespondError(c, http.StatusBadRequest, "invalid id", "invalid id")
+			return
+		}
+		id, err := strconv.ParseInt(idStr, 10, 64)
+		if err != nil || id <= 0 {
+			httperror.RespondError(c, http.StatusBadRequest, "invalid_path", "id must be a positive integer")
+			return
+		}
+
+		_, err = h.svc.DeleteCat(ctx, id)
+		if err != nil {
+			switch {
+			case errors.Is(err, servieserrors.ErrCatNotFound):
+				httperror.RespondError(c, http.StatusNotFound, "not found", "cat not found")
+			default:
+				httperror.RespondError(c, http.StatusInternalServerError, "internal", "internal server error")
+
+			}
+			return
+		}
+		c.JSON(http.StatusOK, dto.DeleteCatResponse{Deleted: true, ID: id})
+	}
+
 }

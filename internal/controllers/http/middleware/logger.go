@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
+	log "github.com/rs/zerolog/log"
 )
 
 type bodyLogWriter struct {

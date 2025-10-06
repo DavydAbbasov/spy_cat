@@ -15,11 +15,13 @@ type CatService interface {
 	CreateCat(ctx context.Context, cat *domain.Cat) (int64, error)
 	ListCats(ctx context.Context, p domain.ListCatsParams) ([]domain.Cat, error)
 	GetCat(ctx context.Context, id int64) (domain.Cat, error)
+	DeleteCat(ctx context.Context, id int64) (int64, error)
 }
 type CatRepository interface {
 	CreateCat(ctx context.Context, cat *domain.Cat) (int64, error)
 	ListCats(ctx context.Context, p domain.ListCatsParams) ([]domain.Cat, error)
 	GetCat(ctx context.Context, id int64) (domain.Cat, error)
+	DeleteCat(ctx context.Context, id int64) (int64, error)
 }
 type catService struct {
 	repo CatRepository
@@ -60,4 +62,19 @@ func (s *catService) ListCats(ctx context.Context, p domain.ListCatsParams) ([]d
 	}
 
 	return s.repo.ListCats(ctx, p)
+}
+func (s *catService) DeleteCat(ctx context.Context, id int64) (int64, error) {
+	if id <= 0 {
+		return 0, errors.New("invalid id")
+	}
+
+	affected, err := s.repo.DeleteCat(ctx, id)
+	if err != nil {
+		return 0, err
+	}
+
+	if affected == 0 {
+		return 0, servieserrors.ErrCatNotFound
+	}
+	return 0, nil
 }

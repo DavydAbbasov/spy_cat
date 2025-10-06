@@ -29,6 +29,7 @@ func NewRouter(catSvc catservice.CatService) http.Handler {
 	router.POST("/cats/create", catHandler.CreateCat())
 	router.GET("/cats/:id", catHandler.GetCat())
 	router.GET("/cats", catHandler.GetCats())
+	router.DELETE("/cats/:id", catHandler.DeleteCat())
 	// missions
 
 	// swagger
