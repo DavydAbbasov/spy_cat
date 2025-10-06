@@ -35,9 +35,9 @@ func NewCatHandler(svc catservice.CatService, validator *validator.Validator) *C
 // @Accept json
 // @Produce json
 // @Param CreateCatRequest body  dto.CreateCatRequest true "Request to create a cat"
-// @Success 201 {object}  dto.CreateCatResponse
-// @Failure 400
-// @Failure 500
+// @Success 201 {object} dto.CreateCatResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
 // @Router /cats/create [post]
 func (h *CatHandler) CreateCat() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -48,8 +48,9 @@ func (h *CatHandler) CreateCat() gin.HandlerFunc {
 		if err != nil {
 			if errors.Is(err, validator.ErrHandlerValidationFailed) {
 				httperror.RespondError(c, http.StatusBadRequest, "invalid_body", err.Error())
+				return
 			}
-			httperror.RespondError(c, http.StatusInternalServerError, "internal", "internal server error")
+			httperror.RespondError(c, http.StatusBadRequest, "invalid_json", "invalid json body")
 			return
 		}
 
@@ -60,10 +61,15 @@ func (h *CatHandler) CreateCat() gin.HandlerFunc {
 			Salary:          req.Salary,
 		})
 		if err != nil {
-			httperror.RespondError(c, http.StatusInternalServerError, "internal", "internal server error")
-			return
+			switch {
+			case errors.Is(err, servieserrors.ErrBreedInvalid):
+				httperror.RespondError(c, http.StatusBadRequest, "invalid_breed", "breed is not allowed")
+				return
+			default:
+				httperror.RespondError(c, http.StatusInternalServerError, "internal", "internal server error")
+				return
+			}
 		}
-
 		c.Header("Location", fmt.Sprintf("/cats/%d", id))
 		c.JSON(http.StatusCreated, dto.CreateCatResponse{ID: id})
 	}

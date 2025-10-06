@@ -120,10 +120,16 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request"
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error"
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
                     }
                 }
             }
@@ -246,13 +252,20 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "breed",
-                "name",
-                "salary",
-                "years_experience"
+                "name"
             ],
             "properties": {
                 "breed": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                        "sphynx",
+                        "british",
+                        "persian",
+                        "maine_coon",
+                        "siamese",
+                        "bengal",
+                        "ragdoll"
+                    ]
                 },
                 "name": {
                     "type": "string",

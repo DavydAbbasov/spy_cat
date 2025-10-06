@@ -4,9 +4,9 @@ import "github.com/DavydAbbasov/spy-cat/internal/domain"
 
 type CreateCatRequest struct {
 	Name            string  `json:"name"              validate:"required,min=2,max=64"`
-	YearsExperience int64   `json:"years_experience"  validate:"required,min=0,max=60"`
-	Breed           string  `json:"breed"             validate:"required"`
-	Salary          float64 `json:"salary"            validate:"required,gte=0,lte=1000000"`
+	YearsExperience int64   `json:"years_experience"  validate:"gte=0,lte=60"`
+	Breed           string  `json:"breed"             validate:"required,oneof=sphynx british persian maine_coon siamese bengal ragdoll"`
+	Salary          float64 `json:"salary"            validate:"gte=0,lte=1000000"`
 }
 
 type CreateCatResponse struct {
@@ -33,6 +33,6 @@ type ErrorResponse struct {
 	Details interface{} `json:"details,omitempty"`
 }
 type DeleteCatResponse struct {
-    Deleted bool  `json:"deleted"`
-    ID      int64 `json:"id"`
+	Deleted bool  `json:"deleted"`
+	ID      int64 `json:"id"`
 }
