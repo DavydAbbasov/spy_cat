@@ -13,7 +13,7 @@ type CatResponse struct {
 type CreateCatRequest struct {
 	Name            string  `json:"name"              validate:"required,min=2,max=64"`
 	YearsExperience int64   `json:"years_experience"  validate:"gte=0,lte=60"`
-	Breed           string  `json:"breed"             validate:"required,oneof=sphynx british persian maine_coon siamese bengal ragdoll"`
+	Breed           string  `json:"breed"             validate:"required,min=2,max=64"`
 	Salary          float64 `json:"salary"            validate:"gte=0,lte=1000000"`
 }
 
@@ -74,4 +74,3 @@ func ToCatResponses(items []domain.Cat) []CatResponse {
 	}
 	return out
 }
-

@@ -316,15 +316,8 @@ const docTemplate = `{
             "properties": {
                 "breed": {
                     "type": "string",
-                    "enum": [
-                        "sphynx",
-                        "british",
-                        "persian",
-                        "maine_coon",
-                        "siamese",
-                        "bengal",
-                        "ragdoll"
-                    ]
+                    "maxLength": 64,
+                    "minLength": 2
                 },
                 "name": {
                     "type": "string",

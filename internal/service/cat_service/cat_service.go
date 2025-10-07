@@ -25,13 +25,18 @@ type CatRepository interface {
 	DeleteCat(ctx context.Context, id int64) (int64, error)
 	UpdateSalary(ctx context.Context, id int64, salary float64) (domain.Cat, error)
 }
+type BreedValidator interface {
+	IsValid(ctx context.Context, breed string) (bool, error)
+}
 type catService struct {
-	repo CatRepository
+	repo   CatRepository
+	breeds BreedValidator
 }
 
-func NewCatService(repo CatRepository) CatService {
+func NewCatService(repo CatRepository, breeds BreedValidator) CatService {
 	return &catService{
-		repo: repo,
+		repo:   repo,
+		breeds: breeds,
 	}
 }
 
@@ -39,6 +44,14 @@ func (s *catService) CreateCat(ctx context.Context, cat *domain.Cat) (int64, err
 	cat.Name = strings.TrimSpace(cat.Name)
 	if cat.Name == "" {
 		return 0, errors.New("name is required")
+	}
+
+	ok, err := s.breeds.IsValid(ctx, cat.Breed)
+	if err != nil {
+		return 0, servieserrors.ErrExternalService
+	}
+	if !ok {
+		return 0, servieserrors.ErrBreedInvalid
 	}
 
 	return s.repo.CreateCat(ctx, cat)

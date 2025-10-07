@@ -62,6 +62,9 @@ func (h *CatHandler) CreateCat() gin.HandlerFunc {
 			case errors.Is(err, serviceserrors.ErrBreedInvalid):
 				httperror.RespondError(c, http.StatusBadRequest, "invalid_breed", "breed is not allowed")
 				return
+			case errors.Is(err, serviceserrors.ErrExternalService):
+				httperror.RespondError(c, http.StatusBadGateway, "external_unavailable", "breed validation service unavailable")
+				return
 			default:
 				httperror.RespondError(c, http.StatusInternalServerError, "internal", "internal server error")
 				return
@@ -213,6 +216,7 @@ func (h *CatHandler) DeleteCat() gin.HandlerFunc {
 	}
 
 }
+
 // Update salary
 // @Summary      Update cat salary
 // @Description  Updates salary for a specific cat
@@ -227,42 +231,42 @@ func (h *CatHandler) DeleteCat() gin.HandlerFunc {
 // @Failure      500  {object} dto.ErrorResponse
 // @Router       /cats/{id}/salary [patch]
 func (h *CatHandler) UpdateSalary() gin.HandlerFunc {
-    return func(c *gin.Context) {
-        ctx := c.Request.Context()
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
 
-        id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-        if err != nil || id <= 0 {
-            httperror.RespondError(c, http.StatusBadRequest, "invalid_path", "id must be a positive integer")
-            return
-        }
+		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil || id <= 0 {
+			httperror.RespondError(c, http.StatusBadRequest, "invalid_path", "id must be a positive integer")
+			return
+		}
 
-        req, err := validator.DecodeJSON[dto.UpdateSalaryRequest](h.validator, c.Request)
-        if err != nil {
-            if errors.Is(err, validator.ErrHandlerValidationFailed) {
-                httperror.RespondError(c, http.StatusBadRequest, "invalid_body", err.Error())
-                return
-            }
-            httperror.RespondError(c, http.StatusBadRequest, "invalid_json", "invalid json body")
-            return
-        }
+		req, err := validator.DecodeJSON[dto.UpdateSalaryRequest](h.validator, c.Request)
+		if err != nil {
+			if errors.Is(err, validator.ErrHandlerValidationFailed) {
+				httperror.RespondError(c, http.StatusBadRequest, "invalid_body", err.Error())
+				return
+			}
+			httperror.RespondError(c, http.StatusBadRequest, "invalid_json", "invalid json body")
+			return
+		}
 
-        cat, err := h.svc.UpdateSalary(ctx, domain.UpdateSalaryParams{
-            ID: id,
+		cat, err := h.svc.UpdateSalary(ctx, domain.UpdateSalaryParams{
+			ID:     id,
 			Salary: req.Salary,
-        })
+		})
 
-        if err != nil {
-            switch {
-            case errors.Is(err, serviceserrors.ErrCatNotFound):
-                httperror.RespondError(c, http.StatusNotFound, "not_found", "cat not found")
-            case errors.Is(err, serviceserrors.ErrInvalidSalary):
-                httperror.RespondError(c, http.StatusBadRequest, "invalid_salary", "salary must be >= 0")
-            default:
-                httperror.RespondError(c, http.StatusInternalServerError, "internal", "internal server error")
-            }
-            return
-        }
+		if err != nil {
+			switch {
+			case errors.Is(err, serviceserrors.ErrCatNotFound):
+				httperror.RespondError(c, http.StatusNotFound, "not_found", "cat not found")
+			case errors.Is(err, serviceserrors.ErrInvalidSalary):
+				httperror.RespondError(c, http.StatusBadRequest, "invalid_salary", "salary must be >= 0")
+			default:
+				httperror.RespondError(c, http.StatusInternalServerError, "internal", "internal server error")
+			}
+			return
+		}
 
-        c.JSON(http.StatusOK, dto.ToCatResponse(cat))
-    }
+		c.JSON(http.StatusOK, dto.ToCatResponse(cat))
+	}
 }

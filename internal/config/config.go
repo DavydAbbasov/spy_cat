@@ -11,6 +11,7 @@ type Config struct {
 	Environment string         `env:"ENVIRONMENT" env-default:"dev"`
 	HTTP        HTTPConfig     `env-prefix:"HTTP_"`
 	Postgres    PostgresConfig `env-prefix:"PG_"`
+	CatAPI      CatAPIConfig   `env-prefix:"CAT_API_"`
 }
 
 type HTTPConfig struct {
@@ -31,6 +32,11 @@ type PostgresConfig struct {
 	MaxOpenConns    int           `env:"MAX_OPEN_CONNS"    env-default:"10"`
 	MaxIdleConns    int           `env:"MAX_IDLE_CONNS"    env-default:"10"`
 	ConnMaxLifetime time.Duration `env:"CONN_MAX_LIFETIME" env-default:"30m"`
+}
+type CatAPIConfig struct {
+	BaseURL string        `env:"CAT_API_BASE"    env-default:"https://api.thecatapi.com"`
+	APIKey  string        `env:"CAT_API_KEY"     env-default:""`
+	Timeout time.Duration `env:"CAT_API_TIMEOUT" env-default:"2s"`
 }
 
 func (p *PostgresConfig) DSN() string {

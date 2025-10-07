@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/DavydAbbasov/spy-cat/internal/config"
+	"github.com/DavydAbbasov/spy-cat/internal/lib/catapi"
 	postgres "github.com/DavydAbbasov/spy-cat/internal/lib/postgresql"
 	"github.com/joho/godotenv"
 
@@ -31,15 +32,21 @@ func Run() error {
 	}
 	defer db.Close()
 
+	//catApi
+	breedClient := catapi.NewClient(
+		cfg.CatAPI.BaseURL,
+		cfg.CatAPI.APIKey,
+		cfg.CatAPI.Timeout,
+	)
 	// repository
 	catRepo := catrepository.NewCatRepository(db)
 
 	// services
-	catSvc := catservice.NewCatService(catRepo)
+	catSvc := catservice.NewCatService(catRepo, breedClient)
 
 	httpServer := &http.Server{
-		Addr:         cfg.HTTP.Addr,
-		Handler:      NewRouter(catSvc),
+		Addr:    cfg.HTTP.Addr,
+		Handler: NewRouter(catSvc),
 
 		ReadTimeout:  cfg.HTTP.ReadTimeout,
 		WriteTimeout: cfg.HTTP.WriteTimeout,

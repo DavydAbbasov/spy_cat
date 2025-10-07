@@ -1,5 +1,5 @@
-## Spy Cat API
-🐱
+## 🐱Spy Cat API
+
 A REST API in Go (Gin) with PostgreSQL.
 The project ships with Docker Compose (app + Postgres + migrations),
 clean module structure, database migrations, and Swagger/OpenAPI docs.
@@ -14,13 +14,27 @@ cp .env.example .env && docker compose up -d --build
 2. Apply database migrations
 docker compose run --rm migrate up
 
-App runs at [http://localhost:8080](http://localhost:8080)
-
-Swagger
-Open in browser:
-[http://localhost:8080/swagger/index.html](http://localhost:8080/swagger/index.html)
+[App runs at](http://localhost:8080)
+[Swagger UI](http://localhost:8080/swagger/index.html)
 ```
+## Full Setup (for any OS)
+```text
+git clone https://github.com/<your-username>/spy-cat.git
+cd spy-cat
 
+# 1. Copy environment file
+cp .env.example .env   # Linux / macOS
+# (Windows PowerShell) Copy-Item .env.example .env
+
+# 2. Build and start containers
+docker compose up -d --build
+
+# 3. Apply migrations
+docker compose run --rm migrate up
+
+# 4. (Optional) Seed demo data
+docker compose run --rm seed
+```
 ## 🐾 Seeding demo data
 ``` text
 You can optionally fill the database with demo cats from

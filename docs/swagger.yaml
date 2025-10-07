@@ -15,14 +15,8 @@ definitions:
   dto.CreateCatRequest:
     properties:
       breed:
-        enum:
-        - sphynx
-        - british
-        - persian
-        - maine_coon
-        - siamese
-        - bengal
-        - ragdoll
+        maxLength: 64
+        minLength: 2
         type: string
       name:
         maxLength: 64
