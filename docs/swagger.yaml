@@ -1,4 +1,9 @@
 definitions:
+  dto.AssignMissionRequest:
+    properties:
+      catId:
+        type: integer
+    type: object
   dto.CatResponse:
     properties:
       breed:
@@ -337,6 +342,43 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Create a new mission
+      tags:
+      - missions
+  /missions/{id}/assign:
+    patch:
+      consumes:
+      - application/json
+      description: Used to link or unlink a mission with a cat
+      parameters:
+      - description: Mission ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Assignment payload
+        in: body
+        name: AssignMissionRequest
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AssignMissionRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Assign mission to a cat (or unassign with null)
       tags:
       - missions
 swagger: "2.0"

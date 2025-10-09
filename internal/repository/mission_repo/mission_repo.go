@@ -3,9 +3,14 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
+
+	serviceserrors "github.com/DavydAbbasov/spy-cat/internal/servies_errors"
+	"github.com/rs/zerolog/log"
 
 	"github.com/DavydAbbasov/spy-cat/internal/domain"
 	service "github.com/DavydAbbasov/spy-cat/internal/service/mission_service"
+	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -56,5 +61,32 @@ func (r *MissionRepo) InsertGoals(ctx context.Context, tx service.Tx, missionID 
 			return err
 		}
 	}
+	return nil
+}
+func (r *MissionRepo) AssignCat(ctx context.Context, tx service.Tx, missionID int64, catID *int64) error {
+	pgtx := tx.(*pgTx)
+
+	q := `
+		UPDATE missions
+		SET cat_id = $2, updated_at = now()
+		WHERE id = $1
+		RETURNING id;
+	`
+
+	var id int64
+	err := pgtx.tx.QueryRowContext(ctx, q, missionID, catID).Scan(&id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn().Int64("mission_id", missionID).Msg("mission not found")
+			return serviceserrors.ErrMissionNotFound
+		}
+
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+			return serviceserrors.ErrCatNotFound
+		}
+		return err
+	}
+
 	return nil
 }

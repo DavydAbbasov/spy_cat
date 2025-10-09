@@ -2,19 +2,24 @@ package service
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"strings"
 
 	"github.com/DavydAbbasov/spy-cat/internal/domain"
-	servieserrors "github.com/DavydAbbasov/spy-cat/internal/servies_errors"
+	serviceserrors "github.com/DavydAbbasov/spy-cat/internal/servies_errors"
+	"github.com/rs/zerolog/log"
 )
 
 type MissionService interface {
 	CreateMission(ctx context.Context, p domain.CreateMissionParams) (domain.Mission, error)
+	AssignCat(ctx context.Context, missionID int64, catID *int64) error
 }
 type MissionRepository interface {
 	BeginTx(ctx context.Context) (Tx, error)
 	InsertMission(ctx context.Context, tx Tx, m *domain.Mission) (int64, error)
 	InsertGoals(ctx context.Context, tx Tx, missionID int64, goals []domain.MissionGoal) error
+	AssignCat(ctx context.Context, tx Tx, missionID int64, catID *int64) error
 }
 type Tx interface {
 	Commit(ctx context.Context) error
@@ -34,7 +39,7 @@ func (s *missionService) CreateMission(ctx context.Context, p domain.CreateMissi
 	p.Description = strings.TrimSpace(p.Description)
 
 	if p.Title == "" {
-		return domain.Mission{}, servieserrors.ErrInvalidCreateMission
+		return domain.Mission{}, serviceserrors.ErrInvalidCreateMission
 	}
 
 	goals := make([]domain.MissionGoal, 0, len(p.Goals))
@@ -44,10 +49,10 @@ func (s *missionService) CreateMission(ctx context.Context, p domain.CreateMissi
 		notes := strings.TrimSpace(g.Notes)
 
 		if name == "" {
-			return domain.Mission{}, servieserrors.ErrInvalidGoalName
+			return domain.Mission{}, serviceserrors.ErrInvalidGoalName
 		}
 		if len(country) != 2 {
-			return domain.Mission{}, servieserrors.ErrInvalidCountry
+			return domain.Mission{}, serviceserrors.ErrInvalidCountry
 		}
 
 		goals = append(goals, domain.MissionGoal{
@@ -62,7 +67,11 @@ func (s *missionService) CreateMission(ctx context.Context, p domain.CreateMissi
 	if err != nil {
 		return domain.Mission{}, err
 	}
-	defer func() { _ = tx.Rollback(ctx) }()
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil && !errors.Is(err, sql.ErrTxDone) {
+			log.Warn().Err(err).Msg("rollback failed")
+		}
+	}()
 
 	m := domain.Mission{
 		Title:       p.Title,
@@ -87,4 +96,28 @@ func (s *missionService) CreateMission(ctx context.Context, p domain.CreateMissi
 
 	m.ID = id
 	return m, nil
+}
+func (s *missionService) AssignCat(ctx context.Context, missionID int64, catID *int64) error {
+	if missionID <= 0 {
+		return serviceserrors.ErrInvalidCreateMission
+	}
+
+	tx, err := s.repo.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	err = s.repo.AssignCat(ctx, tx, missionID, catID)
+	if err != nil {
+		if errors.Is(err, serviceserrors.ErrMissionNotFound) {
+			return serviceserrors.ErrMissionNotFound
+		}
+		if errors.Is(err, serviceserrors.ErrCatNotFound) {
+			return serviceserrors.ErrCatNotFound
+		}
+		return err
+	}
+
+	return tx.Commit(ctx)
 }

@@ -21,6 +21,9 @@ type CreateGoalRequest struct {
 type CreateMissionResponse struct {
 	ID int64 `json:"id"`
 }
+type AssignMissionRequest struct {
+	CatID *int64 `json:"catId" validate:"omitempty,gt=0"`
+}
 type MissionResponse struct {
 	ID          int64          `json:"id"`
 	Title       string         `json:"title"`

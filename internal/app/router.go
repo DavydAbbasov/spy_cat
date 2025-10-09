@@ -38,6 +38,7 @@ func NewRouter(catSvc catservice.CatService, missionSvc missionservice.MissionSe
 
 	// missions
 	router.POST("/missions", missionHandler.CreateMission())
+	router.PATCH("/missions/:id/assign", missionHandler.AssignMission())
 
 	// swagger
 	router.GET("/swagger/*any", swagger.Swagger())
