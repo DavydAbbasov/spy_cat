@@ -38,11 +38,11 @@ type GetCatsResponse struct {
 	NextOffset int           `json:"next_offset"`
 }
 
-type ErrorResponse struct {
-	Code    string      `json:"code"    example:"INVALID_INPUT"`
-	Message string      `json:"message" example:"validation error"`
-	Details interface{} `json:"details,omitempty"`
-}
+// type ErrorResponse struct {
+// 	Code    string      `json:"code"    example:"INVALID_INPUT"`
+// 	Message string      `json:"message" example:"validation error"`
+// 	Details interface{} `json:"details,omitempty"`
+// }
 type DeleteCatResponse struct {
 	Deleted bool  `json:"deleted"`
 	ID      int64 `json:"id"`

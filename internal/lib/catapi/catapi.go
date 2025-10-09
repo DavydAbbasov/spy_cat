@@ -38,6 +38,7 @@ func (c *Client) SearchBreeds(ctx context.Context, q string) ([]Breed, int, erro
 	if err != nil {
 		return nil, 0, fmt.Errorf("create request: %w", err)
 	}
+ 
 
 	if c.apiKey != "" {
 		req.Header.Set("x-api-key", c.apiKey)

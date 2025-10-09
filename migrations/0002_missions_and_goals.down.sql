@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS mission_goals;
+DROP TABLE IF EXISTS missions;

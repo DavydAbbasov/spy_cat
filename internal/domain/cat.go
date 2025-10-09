@@ -16,6 +16,6 @@ type ListCatsParams struct {
 	Offset   int
 }
 type UpdateSalaryParams struct {
-    ID     int64
-    Salary float64
+	ID     int64
+	Salary float64
 }

@@ -5,16 +5,19 @@ import (
 
 	pinghandler "github.com/DavydAbbasov/spy-cat/internal/controllers/http/handlers"
 	cathandlers "github.com/DavydAbbasov/spy-cat/internal/controllers/http/handlers/cat"
+	missionhandlers "github.com/DavydAbbasov/spy-cat/internal/controllers/http/handlers/mission"
+
 	"github.com/DavydAbbasov/spy-cat/internal/controllers/http/handlers/swagger"
 	logmiddleware "github.com/DavydAbbasov/spy-cat/internal/controllers/http/middleware"
 	validator "github.com/DavydAbbasov/spy-cat/internal/controllers/http/validator"
 
 	catservice "github.com/DavydAbbasov/spy-cat/internal/service/cat_service"
+	missionservice "github.com/DavydAbbasov/spy-cat/internal/service/mission_service"
 
 	"github.com/gin-gonic/gin"
 )
 
-func NewRouter(catSvc catservice.CatService) http.Handler {
+func NewRouter(catSvc catservice.CatService, missionSvc missionservice.MissionService) http.Handler {
 
 	router := gin.Default()
 	validator := validator.NewValidator()
@@ -24,6 +27,7 @@ func NewRouter(catSvc catservice.CatService) http.Handler {
 
 	// handlers
 	catHandler := cathandlers.NewCatHandler(catSvc, validator)
+	missionHandler := missionhandlers.NewMissionHandler(missionSvc, validator)
 
 	// cats
 	router.POST("/cats/create", catHandler.CreateCat())
@@ -31,7 +35,9 @@ func NewRouter(catSvc catservice.CatService) http.Handler {
 	router.GET("/cats", catHandler.GetCats())
 	router.DELETE("/cats/:id", catHandler.DeleteCat())
 	router.PATCH("/cats/:id/salary", catHandler.UpdateSalary())
+
 	// missions
+	router.POST("/missions", missionHandler.CreateMission())
 
 	// swagger
 	router.GET("/swagger/*any", swagger.Swagger())

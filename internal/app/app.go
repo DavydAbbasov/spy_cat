@@ -14,8 +14,11 @@ import (
 	postgres "github.com/DavydAbbasov/spy-cat/internal/lib/postgresql"
 	"github.com/joho/godotenv"
 
-	catrepository "github.com/DavydAbbasov/spy-cat/internal/repository/postgresql"
+	catrepository "github.com/DavydAbbasov/spy-cat/internal/repository/cat_repo"
+	missionrepository "github.com/DavydAbbasov/spy-cat/internal/repository/mission_repo"
+
 	catservice "github.com/DavydAbbasov/spy-cat/internal/service/cat_service"
+	missionservice "github.com/DavydAbbasov/spy-cat/internal/service/mission_service"
 
 	log "github.com/rs/zerolog/log"
 )
@@ -40,13 +43,15 @@ func Run() error {
 	)
 	// repository
 	catRepo := catrepository.NewCatRepository(db)
+	missionRepo := missionrepository.NewMissionRepository(db)
 
 	// services
 	catSvc := catservice.NewCatService(catRepo, breedClient)
+	missionSvc := missionservice.NewMissionService(missionRepo)
 
 	httpServer := &http.Server{
 		Addr:    cfg.HTTP.Addr,
-		Handler: NewRouter(catSvc),
+		Handler: NewRouter(catSvc, missionSvc),
 
 		ReadTimeout:  cfg.HTTP.ReadTimeout,
 		WriteTimeout: cfg.HTTP.WriteTimeout,

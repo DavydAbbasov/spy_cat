@@ -10,7 +10,7 @@ import (
 	serviceserrors "github.com/DavydAbbasov/spy-cat/internal/servies_errors"
 	"github.com/gin-gonic/gin"
 
-	"github.com/DavydAbbasov/spy-cat/internal/controllers/http/dto"
+	"github.com/DavydAbbasov/spy-cat/internal/controllers/http/dto/cat"
 	httperror "github.com/DavydAbbasov/spy-cat/internal/controllers/http/helpers"
 	catservice "github.com/DavydAbbasov/spy-cat/internal/service/cat_service"
 
