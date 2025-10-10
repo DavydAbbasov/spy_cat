@@ -2,6 +2,7 @@ package dto
 
 import (
 	"strings"
+	"time"
 
 	"github.com/DavydAbbasov/spy-cat/internal/domain"
 )
@@ -82,4 +83,28 @@ func toCreateGoalParams(in []CreateGoalRequest) []domain.CreateGoalParams {
 		})
 	}
 	return out
+}
+func ToMissionResponse(m domain.Mission, goals []domain.MissionGoal) MissionResponse {
+	resp := MissionResponse{
+		ID:          m.ID,
+		Title:       m.Title,
+		Description: m.Description,
+		Status:      string(m.Status),
+		CatID:       m.CatID,
+		CreatedAt:   m.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   m.UpdatedAt.Format(time.RFC3339),
+	}
+	resp.Goals = make([]GoalResponse, 0, len(goals))
+	for _, g := range goals {
+		resp.Goals = append(resp.Goals, GoalResponse{
+			ID:        g.ID,
+			Name:      g.Name,
+			Status:    string(g.Status),
+			Country:   g.Country,
+			Notes:     g.Notes,
+			CreatedAt: g.CreatedAt.Format(time.RFC3339),
+			UpdatedAt: g.UpdatedAt.Format(time.RFC3339),
+		})
+	}
+	return resp
 }

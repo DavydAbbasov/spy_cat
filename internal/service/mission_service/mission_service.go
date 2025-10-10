@@ -7,19 +7,22 @@ import (
 	"strings"
 
 	"github.com/DavydAbbasov/spy-cat/internal/domain"
-	serviceserrors "github.com/DavydAbbasov/spy-cat/internal/servies_errors"
+	serviceerrors "github.com/DavydAbbasov/spy-cat/internal/servies_errors"
 	"github.com/rs/zerolog/log"
 )
 
 type MissionService interface {
 	CreateMission(ctx context.Context, p domain.CreateMissionParams) (domain.Mission, error)
 	AssignCat(ctx context.Context, missionID int64, catID *int64) error
+	GetMission(ctx context.Context, id int64) (domain.Mission, []domain.MissionGoal, error)
 }
 type MissionRepository interface {
 	BeginTx(ctx context.Context) (Tx, error)
 	InsertMission(ctx context.Context, tx Tx, m *domain.Mission) (int64, error)
 	InsertGoals(ctx context.Context, tx Tx, missionID int64, goals []domain.MissionGoal) error
 	AssignCat(ctx context.Context, tx Tx, missionID int64, catID *int64) error
+	GetMission(ctx context.Context, id int64) (domain.Mission, error)
+	GetMissionGoals(ctx context.Context, missionID int64) ([]domain.MissionGoal, error)
 }
 type Tx interface {
 	Commit(ctx context.Context) error
@@ -39,7 +42,7 @@ func (s *missionService) CreateMission(ctx context.Context, p domain.CreateMissi
 	p.Description = strings.TrimSpace(p.Description)
 
 	if p.Title == "" {
-		return domain.Mission{}, serviceserrors.ErrInvalidCreateMission
+		return domain.Mission{}, serviceerrors.ErrInvalidCreateMission
 	}
 
 	goals := make([]domain.MissionGoal, 0, len(p.Goals))
@@ -49,10 +52,10 @@ func (s *missionService) CreateMission(ctx context.Context, p domain.CreateMissi
 		notes := strings.TrimSpace(g.Notes)
 
 		if name == "" {
-			return domain.Mission{}, serviceserrors.ErrInvalidGoalName
+			return domain.Mission{}, serviceerrors.ErrInvalidGoalName
 		}
 		if len(country) != 2 {
-			return domain.Mission{}, serviceserrors.ErrInvalidCountry
+			return domain.Mission{}, serviceerrors.ErrInvalidCountry
 		}
 
 		goals = append(goals, domain.MissionGoal{
@@ -99,7 +102,7 @@ func (s *missionService) CreateMission(ctx context.Context, p domain.CreateMissi
 }
 func (s *missionService) AssignCat(ctx context.Context, missionID int64, catID *int64) error {
 	if missionID <= 0 {
-		return serviceserrors.ErrInvalidCreateMission
+		return serviceerrors.ErrInvalidCreateMission
 	}
 
 	tx, err := s.repo.BeginTx(ctx)
@@ -110,14 +113,34 @@ func (s *missionService) AssignCat(ctx context.Context, missionID int64, catID *
 
 	err = s.repo.AssignCat(ctx, tx, missionID, catID)
 	if err != nil {
-		if errors.Is(err, serviceserrors.ErrMissionNotFound) {
-			return serviceserrors.ErrMissionNotFound
+		if errors.Is(err, serviceerrors.ErrMissionNotFound) {
+			return serviceerrors.ErrMissionNotFound
 		}
-		if errors.Is(err, serviceserrors.ErrCatNotFound) {
-			return serviceserrors.ErrCatNotFound
+		if errors.Is(err, serviceerrors.ErrCatNotFound) {
+			return serviceerrors.ErrCatNotFound
 		}
 		return err
 	}
 
 	return tx.Commit(ctx)
+}
+func (s *missionService) GetMission(ctx context.Context, id int64) (domain.Mission, []domain.MissionGoal, error) {
+	if id <= 0 {
+		return domain.Mission{}, nil, serviceerrors.ErrMissionNotFound
+	}
+
+	mission, err := s.repo.GetMission(ctx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.Mission{}, nil, serviceerrors.ErrMissionNotFound
+		}
+		return domain.Mission{}, nil, err
+	}
+
+	goals, err := s.repo.GetMissionGoals(ctx, id)
+	if err != nil {
+		return domain.Mission{}, nil, err
+	}
+
+	return mission, goals, nil
 }

@@ -285,6 +285,53 @@ const docTemplate = `{
                 }
             }
         },
+        "/mission/{id}": {
+            "get": {
+                "description": "The ability to receive information about a single mission",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "missions"
+                ],
+                "summary": "Get a single mission",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID Mission",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MissionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/missions": {
             "post": {
                 "description": "Used to create a new mission",
@@ -567,6 +614,64 @@ const docTemplate = `{
                 },
                 "offset": {
                     "type": "integer"
+                }
+            }
+        },
+        "dto.GoalResponse": {
+            "type": "object",
+            "properties": {
+                "country": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.MissionResponse": {
+            "type": "object",
+            "properties": {
+                "catId": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "goals": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.GoalResponse"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
                 }
             }
         },

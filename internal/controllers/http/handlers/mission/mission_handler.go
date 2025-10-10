@@ -9,7 +9,7 @@ import (
 	dto "github.com/DavydAbbasov/spy-cat/internal/controllers/http/dto/mission"
 	httperror "github.com/DavydAbbasov/spy-cat/internal/controllers/http/helpers"
 	"github.com/DavydAbbasov/spy-cat/internal/controllers/http/validator"
-	serviceserrors "github.com/DavydAbbasov/spy-cat/internal/servies_errors"
+	serviceerrors "github.com/DavydAbbasov/spy-cat/internal/servies_errors"
 	"github.com/rs/zerolog/log"
 
 	missionservice "github.com/DavydAbbasov/spy-cat/internal/service/mission_service"
@@ -60,13 +60,13 @@ func (h *MissionHandler) CreateMission() gin.HandlerFunc {
 		mission, err := h.missionSvc.CreateMission(ctx, m)
 		if err != nil {
 			switch {
-			case errors.Is(err, serviceserrors.ErrInvalidCreateMission):
+			case errors.Is(err, serviceerrors.ErrInvalidCreateMission):
 				httperror.RespondError(c, http.StatusBadRequest, "invalid_mission", "mission fields are invalid")
 				return
-			case errors.Is(err, serviceserrors.ErrMissionAlreadyExists):
+			case errors.Is(err, serviceerrors.ErrMissionAlreadyExists):
 				httperror.RespondError(c, http.StatusConflict, "already_exists", "mission with same title already exists")
 				return
-			case errors.Is(err, serviceserrors.ErrExternalService):
+			case errors.Is(err, serviceerrors.ErrExternalService):
 				httperror.RespondError(c, http.StatusBadGateway, "external_unavailable", "external dependency unavailable")
 				return
 			default:
@@ -116,10 +116,10 @@ func (h *MissionHandler) AssignMission() gin.HandlerFunc {
 		err = h.missionSvc.AssignCat(ctx, missionID, req.CatID)
 		if err != nil {
 			switch {
-			case errors.Is(err, serviceserrors.ErrMissionNotFound):
+			case errors.Is(err, serviceerrors.ErrMissionNotFound):
 				httperror.RespondError(c, http.StatusNotFound, "mission_not_found", "mission not found")
 				return
-			case errors.Is(err, serviceserrors.ErrCatNotFound):
+			case errors.Is(err, serviceerrors.ErrCatNotFound):
 				httperror.RespondError(c, http.StatusNotFound, "cat_not_found", "cat not found")
 				return
 			default:
@@ -132,4 +132,45 @@ func (h *MissionHandler) AssignMission() gin.HandlerFunc {
 		c.Status(http.StatusNoContent)
 
 	}
+}
+
+// Get a single mission
+// @Summary      Get a single mission
+// @Description  The ability to receive information about a single mission
+// @Tags         missions
+// @Param        id   path int true "ID Mission"
+// @Produce      json
+// @Success      200 {object} dto.MissionResponse
+// @Failure      400 {object} dto.ErrorResponse
+// @Failure      404 {object} dto.ErrorResponse
+// @Failure      500 {object} dto.ErrorResponse
+// @Router       /mission/{id} [get]
+func (h *MissionHandler) GetMission() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+
+		idStr := c.Param("id")
+		if idStr == "" {
+			httperror.RespondError(c, http.StatusBadRequest, "invalid_path", "id is required")
+			return
+		}
+		id, err := strconv.ParseInt(idStr, 10, 64)
+		if err != nil || id <= 0 {
+			httperror.RespondError(c, http.StatusBadRequest, "invalid_path", "id must be a positive integer")
+			return
+		}
+
+		mission, goals, err := h.missionSvc.GetMission(ctx, id)
+		if err != nil {
+			switch {
+			case errors.Is(err, serviceerrors.ErrMissionNotFound):
+				httperror.RespondError(c, http.StatusNotFound, "not_found", "mission not found ")
+			default:
+				httperror.RespondError(c, http.StatusInternalServerError, "internal", "internal server error")
+			}
+			return
+		}
+		c.JSON(http.StatusOK, dto.ToMissionResponse(mission, goals))
+	}
+
 }

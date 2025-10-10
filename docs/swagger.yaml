@@ -115,6 +115,44 @@ definitions:
       offset:
         type: integer
     type: object
+  dto.GoalResponse:
+    properties:
+      country:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      notes:
+        type: string
+      status:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  dto.MissionResponse:
+    properties:
+      catId:
+        type: integer
+      createdAt:
+        type: string
+      description:
+        type: string
+      goals:
+        items:
+          $ref: '#/definitions/dto.GoalResponse'
+        type: array
+      id:
+        type: integer
+      status:
+        type: string
+      title:
+        type: string
+      updatedAt:
+        type: string
+    type: object
   dto.UpdateSalaryRequest:
     properties:
       salary:
@@ -306,6 +344,37 @@ paths:
       summary: Create a new spy cat
       tags:
       - cats
+  /mission/{id}:
+    get:
+      description: The ability to receive information about a single mission
+      parameters:
+      - description: ID Mission
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.MissionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get a single mission
+      tags:
+      - missions
   /missions:
     post:
       consumes:

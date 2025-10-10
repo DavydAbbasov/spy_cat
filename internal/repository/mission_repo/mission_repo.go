@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
-	serviceserrors "github.com/DavydAbbasov/spy-cat/internal/servies_errors"
+	serviceerrors "github.com/DavydAbbasov/spy-cat/internal/servies_errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/DavydAbbasov/spy-cat/internal/domain"
@@ -78,15 +78,67 @@ func (r *MissionRepo) AssignCat(ctx context.Context, tx service.Tx, missionID in
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Warn().Int64("mission_id", missionID).Msg("mission not found")
-			return serviceserrors.ErrMissionNotFound
+			return serviceerrors.ErrMissionNotFound
 		}
 
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23503" {
-			return serviceserrors.ErrCatNotFound
+			return serviceerrors.ErrCatNotFound
 		}
 		return err
 	}
 
 	return nil
+}
+func (r *MissionRepo) GetMission(ctx context.Context, id int64) (domain.Mission, error) {
+	var m domain.Mission
+
+	q := `
+		SELECT id, title, description,status, cat_id, created_at, updated_at
+		FROM missions
+		WHERE id = $1;`
+
+	err := r.db.QueryRowContext(ctx, q, id).
+		Scan(
+			&m.ID,
+			&m.Title,
+			&m.Description,
+			&m.Status,
+			&m.CatID,
+			&m.CreatedAt,
+			&m.UpdatedAt,
+		)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.Mission{}, serviceerrors.ErrMissionNotFound
+		}
+		return domain.Mission{}, err
+	}
+	return m, nil
+}
+func (r *MissionRepo) GetMissionGoals(ctx context.Context, missionID int64) ([]domain.MissionGoal, error) {
+	q := `
+		SELECT id, mission_id, name, country, notes, status, created_at, updated_at
+		FROM mission_goals
+		WHERE mission_id = $1
+		ORDER BY id;
+	`
+	rows, err := r.db.QueryContext(ctx, q, missionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []domain.MissionGoal
+	for rows.Next() {
+		var g domain.MissionGoal
+		if err := rows.Scan(&g.ID, &g.MissionID, &g.Name, &g.Country, &g.Notes, &g.Status, &g.CreatedAt, &g.UpdatedAt); err != nil {
+			return nil, err
+		}
+		out = append(out, g)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return out, nil
 }

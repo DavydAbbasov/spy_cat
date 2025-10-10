@@ -59,7 +59,7 @@ func (s *catService) CreateCat(ctx context.Context, cat *domain.Cat) (int64, err
 
 func (s *catService) GetCat(ctx context.Context, id int64) (domain.Cat, error) {
 	if id <= 0 {
-		return domain.Cat{}, errors.New("invalid id")
+		return domain.Cat{}, errors.New("invalid cat id")
 	}
 
 	cat, err := s.repo.GetCat(ctx, id)
