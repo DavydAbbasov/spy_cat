@@ -15,6 +15,7 @@ type MissionService interface {
 	CreateMission(ctx context.Context, p domain.CreateMissionParams) (domain.Mission, error)
 	AssignCat(ctx context.Context, missionID int64, catID *int64) error
 	GetMission(ctx context.Context, id int64) (domain.Mission, []domain.MissionGoal, error)
+	List(ctx context.Context, f domain.MissionFilter) ([]domain.MissionListItem, int, error)
 }
 type MissionRepository interface {
 	BeginTx(ctx context.Context) (Tx, error)
@@ -23,7 +24,9 @@ type MissionRepository interface {
 	AssignCat(ctx context.Context, tx Tx, missionID int64, catID *int64) error
 	GetMission(ctx context.Context, id int64) (domain.Mission, error)
 	GetMissionGoals(ctx context.Context, missionID int64) ([]domain.MissionGoal, error)
+	ListMissions(ctx context.Context, f domain.MissionFilter) ([]domain.MissionListItem, int, error)
 }
+
 type Tx interface {
 	Commit(ctx context.Context) error
 	Rollback(ctx context.Context) error
@@ -143,4 +146,15 @@ func (s *missionService) GetMission(ctx context.Context, id int64) (domain.Missi
 	}
 
 	return mission, goals, nil
+}
+
+func (s *missionService) List(ctx context.Context, f domain.MissionFilter) ([]domain.MissionListItem, int, error) {
+	if f.Limit <= 0 || f.Limit > 200 {
+		f.Limit = 50
+	}
+	if f.Offset < 0 {
+		f.Offset = 0
+	}
+
+	return s.repo.ListMissions(ctx, f)
 }

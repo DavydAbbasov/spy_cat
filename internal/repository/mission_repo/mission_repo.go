@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"strings"
 
 	serviceerrors "github.com/DavydAbbasov/spy-cat/internal/servies_errors"
 	"github.com/rs/zerolog/log"
@@ -141,4 +143,127 @@ func (r *MissionRepo) GetMissionGoals(ctx context.Context, missionID int64) ([]d
 		return nil, err
 	}
 	return out, nil
+}
+
+type whereParts struct {
+	sql  string
+	args []any
+}
+
+func buildWhere(f domain.MissionFilter) whereParts {
+	var conds []string
+	var args []any
+	i := 1
+
+	// status = $1
+	if f.Status != nil {
+		conds = append(conds, fmt.Sprintf("status = $%d", i))
+		args = append(args, *f.Status)
+		i++
+	}
+
+	// cat_id = $N
+	if f.CatID != nil {
+		conds = append(conds, fmt.Sprintf("cat_id = $%d", i))
+		args = append(args, *f.CatID)
+		i++
+	}
+
+	// title ILIKE $N
+	if f.Q != nil {
+		q := strings.TrimSpace(*f.Q)
+		if q != "" {
+			conds = append(conds, fmt.Sprintf("title ILIKE $%d", i))
+			args = append(args, "%"+q+"%")
+			i++
+		}
+	}
+
+	if len(conds) == 0 {
+		return whereParts{}
+	}
+
+	return whereParts{
+		sql:  " WHERE " + strings.Join(conds, " AND "),
+		args: args,
+	}
+}
+func (r *MissionRepo) queryItems(ctx context.Context, w whereParts, limit, offset int) ([]domain.MissionListItem, error) {
+	sel := `
+	SELECT id, title, status, cat_id, created_at
+	FROM missions
+	`
+	order := `
+	ORDER BY created_at
+	DESC, id DESC
+	`
+
+	limitPos := len(w.args) + 1
+	offsetPos := limitPos + 1
+
+	q := sel + w.sql + order + fmt.Sprintf(" LIMIT $%d OFFSET $%d", limitPos, offsetPos)
+
+	args := make([]any, 0, len(w.args)+2)
+	args = append(args, w.args...)
+	args = append(args, limit, offset)
+
+	rows, err := r.db.QueryContext(ctx, q, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]domain.MissionListItem, 0, limit)
+	for rows.Next() {
+		var it domain.MissionListItem
+		var cat sql.NullInt64
+
+		if err := rows.Scan(
+			&it.ID,
+			&it.Title,
+			&it.Status,
+			&cat,
+			&it.CreatedAt); err != nil {
+			return nil, err
+		}
+
+		if cat.Valid {
+			v := cat.Int64
+			it.CatID = &v
+		}
+
+		items = append(items, it)
+	}
+
+	return items, rows.Err()
+}
+
+func (r *MissionRepo) queryTotal(ctx context.Context, w whereParts) (int, error) {
+	q := `
+	SELECT count(*)
+	FROM missions
+	`
+
+	var total int
+	if err := r.db.QueryRowContext(ctx, q+w.sql, w.args...).Scan(&total); err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
+func (r *MissionRepo) ListMissions(ctx context.Context, f domain.MissionFilter) ([]domain.MissionListItem, int, error) {
+	w := buildWhere(f)
+
+	items, err := r.queryItems(ctx, w, f.Limit, f.Offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("items: %w", err)
+	}
+
+	total, err := r.queryTotal(ctx, w)
+	if err != nil {
+		return nil, 0, fmt.Errorf("count: %w", err)
+	}
+
+	return items, total, nil
 }

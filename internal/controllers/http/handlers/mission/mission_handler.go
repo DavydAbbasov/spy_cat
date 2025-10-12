@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	dto "github.com/DavydAbbasov/spy-cat/internal/controllers/http/dto/mission"
 	httperror "github.com/DavydAbbasov/spy-cat/internal/controllers/http/helpers"
 	"github.com/DavydAbbasov/spy-cat/internal/controllers/http/validator"
+	"github.com/DavydAbbasov/spy-cat/internal/domain"
 	serviceerrors "github.com/DavydAbbasov/spy-cat/internal/servies_errors"
 	"github.com/rs/zerolog/log"
 
@@ -173,4 +175,49 @@ func (h *MissionHandler) GetMission() gin.HandlerFunc {
 		c.JSON(http.StatusOK, dto.ToMissionResponse(mission, goals))
 	}
 
+}
+
+// @Summary List missions
+// @Tags missions
+// @Produce json
+// @Param status query string false "planned|active|completed"
+// @Param catId  query int    false "Cat ID"
+// @Param q      query string false "search by title"
+// @Param limit  query int    false "limit (1..200)"
+// @Param offset query int    false "offset"
+// @Success 200 {object} dto.GetMissionsResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /missions [get]
+func (h *MissionHandler) GetMissions() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var q dto.GetMissionsQuery
+
+		if err := c.ShouldBindQuery(&q); err != nil {
+			httperror.RespondError(c, http.StatusBadRequest, "invalid_query", err.Error())
+			return
+		}
+
+		var f domain.MissionFilter
+		if q.Status != nil && *q.Status != "" {
+			st := domain.MissionStatus(*q.Status)
+			f.Status = &st
+		}
+		f.CatID = q.CatID
+		if q.Q != nil {
+			if t := strings.TrimSpace(*q.Q); t != "" {
+				f.Q = &t
+			}
+		}
+		f.Limit = q.Limit
+		f.Offset = q.Offset
+
+		items, total, err := h.missionSvc.List(c.Request.Context(), f)
+		if err != nil {
+			httperror.RespondError(c, http.StatusInternalServerError, "internal", "internal server error")
+			return
+		}
+		resp := dto.ToGetMissionsResponse(items, q.Limit, q.Offset, total)
+		c.JSON(http.StatusOK, resp)
+	}
 }

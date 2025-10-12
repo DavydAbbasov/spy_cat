@@ -115,6 +115,19 @@ definitions:
       offset:
         type: integer
     type: object
+  dto.GetMissionsResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.MissionListItem'
+        type: array
+      limit:
+        type: integer
+      offset:
+        type: integer
+      total:
+        type: integer
+    type: object
   dto.GoalResponse:
     properties:
       country:
@@ -130,6 +143,19 @@ definitions:
       status:
         type: string
       updatedAt:
+        type: string
+    type: object
+  dto.MissionListItem:
+    properties:
+      catId:
+        type: integer
+      createdAt:
+        type: string
+      id:
+        type: integer
+      status:
+        type: string
+      title:
         type: string
     type: object
   dto.MissionResponse:
@@ -376,6 +402,46 @@ paths:
       tags:
       - missions
   /missions:
+    get:
+      parameters:
+      - description: planned|active|completed
+        in: query
+        name: status
+        type: string
+      - description: Cat ID
+        in: query
+        name: catId
+        type: integer
+      - description: search by title
+        in: query
+        name: q
+        type: string
+      - description: limit (1..200)
+        in: query
+        name: limit
+        type: integer
+      - description: offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetMissionsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: List missions
+      tags:
+      - missions
     post:
       consumes:
       - application/json

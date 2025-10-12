@@ -49,3 +49,19 @@ type CreateGoalParams struct {
 	Country string
 	Notes   string
 }
+type MissionFilter struct {
+	Status *MissionStatus
+	CatID  *int64
+	Q      *string
+	//pagination
+	Limit  int
+	Offset int
+}
+
+type MissionListItem struct {
+	ID        int64
+	Title     string
+	Status    MissionStatus
+	CatID     *int64
+	CreatedAt time.Time
+}
