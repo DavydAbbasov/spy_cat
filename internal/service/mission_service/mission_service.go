@@ -17,6 +17,7 @@ type MissionService interface {
 	GetMission(ctx context.Context, id int64) (domain.Mission, []domain.MissionGoal, error)
 	List(ctx context.Context, f domain.MissionFilter) ([]domain.MissionListItem, int, error)
 	UpdateStatus(ctx context.Context, p domain.UpdateMissionStatusParams) (domain.Mission, error)
+	AddGoal(ctx context.Context, missionID int64, p domain.CreateGoalParams) (domain.MissionGoal, error)
 }
 type MissionRepository interface {
 	BeginTx(ctx context.Context) (Tx, error)
@@ -27,6 +28,7 @@ type MissionRepository interface {
 	GetMissionGoals(ctx context.Context, missionID int64) ([]domain.MissionGoal, error)
 	ListMissions(ctx context.Context, f domain.MissionFilter) ([]domain.MissionListItem, int, error)
 	UpdateStatusIfCurrent(ctx context.Context, id int64, newStatus, expected domain.MissionStatus) (domain.Mission, bool, error)
+	InsertGoal(ctx context.Context, missionID int64, p domain.CreateGoalParams) (domain.MissionGoal, error)
 }
 
 type Tx interface {
@@ -199,4 +201,46 @@ func (s *missionService) UpdateStatus(ctx context.Context, p domain.UpdateMissio
 	}
 
 	return updated, nil
+}
+func (s *missionService) AddGoal(ctx context.Context, missionID int64, p domain.CreateGoalParams) (domain.MissionGoal, error) {
+	if missionID <= 0 {
+		return domain.MissionGoal{}, serviceerrors.ErrMissionNotFound
+	}
+
+	name := strings.TrimSpace(p.Name)
+	if name == "" || len(name) < 2 || len(name) > 64 {
+		return domain.MissionGoal{}, serviceerrors.ErrInvalidGoalName
+	}
+
+	country := strings.ToUpper(strings.TrimSpace(p.Country))
+	if len(country) != 2 {
+		return domain.MissionGoal{}, serviceerrors.ErrInvalidCountry
+	}
+
+	notes := strings.TrimSpace(p.Notes)
+
+	m, err := s.repo.GetMission(ctx, missionID)
+	if err != nil {
+		if errors.Is(err, serviceerrors.ErrMissionNotFound) {
+			return domain.MissionGoal{}, serviceerrors.ErrMissionNotFound
+		}
+		return domain.MissionGoal{}, err
+	}
+	if m.Status == domain.StatusCompleted {
+		return domain.MissionGoal{}, serviceerrors.ErrMissionCompleted
+	}
+
+	goal, err := s.repo.InsertGoal(ctx, missionID, domain.CreateGoalParams{
+		Name:    name,
+		Country: country,
+		Notes:   notes,
+	})
+	if err != nil {
+		if errors.Is(err, serviceerrors.ErrMissionNotFound) {
+			return domain.MissionGoal{}, serviceerrors.ErrMissionNotFound
+		}
+		return domain.MissionGoal{}, err
+	}
+
+	return goal, nil
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	dto "github.com/DavydAbbasov/spy-cat/internal/controllers/http/dto/mission"
 	httperror "github.com/DavydAbbasov/spy-cat/internal/controllers/http/helpers"
@@ -222,7 +223,6 @@ func (h *MissionHandler) GetMissions() gin.HandlerFunc {
 	}
 }
 
-// controllers/http/handlers/mission_handler.go
 // @Summary Update mission status
 // @Tags missions
 // @Accept json
@@ -273,5 +273,69 @@ func (h *MissionHandler) UpdateMissionStatus() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, dto.ToMissionResponse(m, nil))
+	}
+}
+
+// @Summary Add goal to mission
+// @Tags missions
+// @Accept json
+// @Produce json
+// @Param id path int true "Mission ID"
+// @Param body body dto.AddGoalRequest true "Goal payload"
+// @Success 201 {object} dto.GoalResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /missions/{id}/goals [post]
+func (h *MissionHandler) AddGoal() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		missionID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil || missionID <= 0 {
+			httperror.RespondError(c, http.StatusBadRequest, "invalid_id", "id must be positive integer")
+			return
+		}
+
+		var req dto.AddGoalRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			httperror.RespondError(c, http.StatusBadRequest, "invalid_body", err.Error())
+			return
+		}
+
+		name := strings.TrimSpace(req.Name)
+		country := strings.ToUpper(strings.TrimSpace(req.Country))
+		notes := strings.TrimSpace(req.Notes)
+
+		g, err := h.missionSvc.AddGoal(c.Request.Context(), missionID, domain.CreateGoalParams{
+			Name:    name,
+			Country: country,
+			Notes:   notes,
+		})
+
+		if err != nil {
+			switch {
+			case errors.Is(err, serviceerrors.ErrMissionNotFound):
+				httperror.RespondError(c, http.StatusNotFound, "not_found", "mission not found")
+			case errors.Is(err, serviceerrors.ErrMissionCompleted):
+				httperror.RespondError(c, http.StatusConflict, "mission_completed", "can nott add goal to a completed mission")
+			case errors.Is(err, serviceerrors.ErrInvalidGoalName):
+				httperror.RespondError(c, http.StatusBadRequest, "invalid_name", "invalid goal name")
+			case errors.Is(err, serviceerrors.ErrInvalidCountry):
+				httperror.RespondError(c, http.StatusBadRequest, "invalid_country", "country must be ISO-3166-1 alpha-2")
+			default:
+				httperror.RespondError(c, http.StatusInternalServerError, "internal", "internal server error")
+			}
+			return
+		}
+
+		resp := dto.GoalResponse{
+			ID:        g.ID,
+			Name:      g.Name,
+			Status:    string(g.Status),
+			Country:   g.Country,
+			Notes:     g.Notes,
+			CreatedAt: g.CreatedAt.Format(time.RFC3339),
+			UpdatedAt: g.UpdatedAt.Format(time.RFC3339),
+		}
+		c.JSON(http.StatusCreated, resp)
 	}
 }

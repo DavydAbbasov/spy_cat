@@ -1,4 +1,19 @@
 definitions:
+  dto.AddGoalRequest:
+    properties:
+      country:
+        type: string
+      name:
+        maxLength: 64
+        minLength: 2
+        type: string
+      notes:
+        maxLength: 1000
+        type: string
+    required:
+    - country
+    - name
+    type: object
   dto.AssignMissionRequest:
     properties:
       catId:
@@ -525,6 +540,44 @@ paths:
           schema:
             $ref: '#/definitions/dto.ErrorResponse'
       summary: Assign mission to a cat (or unassign with null)
+      tags:
+      - missions
+  /missions/{id}/goals:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Mission ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Goal payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AddGoalRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.GoalResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Add goal to mission
       tags:
       - missions
   /missions/{id}/status:

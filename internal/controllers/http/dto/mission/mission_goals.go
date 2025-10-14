@@ -67,6 +67,11 @@ type MissionListItem struct {
 type UpdateMissionStatusRequest struct {
 	Status string `json:"status" binding:"required,oneof=planned active completed"`
 }
+type AddGoalRequest struct {
+	Name    string `json:"name"    binding:"required,min=2,max=64"`
+	Country string `json:"country" binding:"required,len=2"`
+	Notes   string `json:"notes"   binding:"max=1000"`
+}
 
 // mapping
 func ToCreateMissionParams(req CreateMissionRequest) domain.CreateMissionParams {

@@ -507,6 +507,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/missions/{id}/goals": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "missions"
+                ],
+                "summary": "Add goal to mission",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Mission ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Goal payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.AddGoalRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.GoalResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/missions/{id}/status": {
             "patch": {
                 "consumes": [
@@ -573,6 +631,27 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dto.AddGoalRequest": {
+            "type": "object",
+            "required": [
+                "country",
+                "name"
+            ],
+            "properties": {
+                "country": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "minLength": 2
+                },
+                "notes": {
+                    "type": "string",
+                    "maxLength": 1000
+                }
+            }
+        },
         "dto.AssignMissionRequest": {
             "type": "object",
             "properties": {

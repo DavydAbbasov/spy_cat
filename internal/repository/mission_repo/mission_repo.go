@@ -291,6 +291,34 @@ func (r *MissionRepo) UpdateStatusIfCurrent(ctx context.Context, id int64, newSt
 	if err != nil {
 		return domain.Mission{}, false, err
 	}
-	
+
 	return m, true, nil
+}
+func (r *MissionRepo) InsertGoal(ctx context.Context, missionID int64, p domain.CreateGoalParams) (domain.MissionGoal, error) {
+	q := `
+	INSERT INTO mission_goals (mission_id, name, country, notes)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, mission_id, name, country, notes, status, created_at, updated_at;
+	`
+	var g domain.MissionGoal
+	if err := r.db.QueryRowContext(ctx, q, missionID, p.Name, p.Country, p.Notes).
+		Scan(
+			&g.ID,
+			&g.MissionID,
+			&g.Name,
+			&g.Country,
+			&g.Notes,
+			&g.Status,
+			&g.CreatedAt,
+			&g.UpdatedAt); err != nil {
+
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23503" { // foreign_key_violation
+			return domain.MissionGoal{}, serviceerrors.ErrMissionNotFound
+		}
+
+		return domain.MissionGoal{}, err
+	}
+
+	return g, nil
 }
