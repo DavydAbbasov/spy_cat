@@ -64,6 +64,9 @@ type MissionListItem struct {
 	CatID     *int64 `json:"catId,omitempty"`
 	CreatedAt string `json:"createdAt"`
 }
+type UpdateMissionStatusRequest struct {
+	Status string `json:"status" binding:"required,oneof=planned active completed"`
+}
 
 // mapping
 func ToCreateMissionParams(req CreateMissionRequest) domain.CreateMissionParams {
@@ -87,6 +90,7 @@ func toCreateGoalParams(in []CreateGoalRequest) []domain.CreateGoalParams {
 
 	out := make([]domain.CreateGoalParams, 0, len(in))
 	seen := make(map[string]struct{}, len(in))
+
 	for _, g := range in {
 		name := strings.TrimSpace(g.Name)
 		if name == "" {
@@ -95,6 +99,7 @@ func toCreateGoalParams(in []CreateGoalRequest) []domain.CreateGoalParams {
 		if _, ok := seen[name]; ok {
 			continue
 		}
+
 		seen[name] = struct{}{}
 		out = append(out, domain.CreateGoalParams{
 			Name:    name,

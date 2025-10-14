@@ -65,3 +65,24 @@ type MissionListItem struct {
 	CatID     *int64
 	CreatedAt time.Time
 }
+type UpdateMissionStatusParams struct {
+	ID     int64
+	Status MissionStatus
+}
+
+func CanTransition(from, to MissionStatus) bool {
+	switch from {
+
+	case StatusPlanned:
+		return to == StatusActive
+
+	case StatusActive:
+		return to == StatusCompleted
+
+	case StatusCompleted:
+		return false
+
+	default:
+		return false
+	}
+}

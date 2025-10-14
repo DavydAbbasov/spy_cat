@@ -267,3 +267,30 @@ func (r *MissionRepo) ListMissions(ctx context.Context, f domain.MissionFilter) 
 
 	return items, total, nil
 }
+func (r *MissionRepo) UpdateStatusIfCurrent(ctx context.Context, id int64, newStatus, expected domain.MissionStatus) (domain.Mission, bool, error) {
+	q := `
+	UPDATE missions
+	SET status = $2, updated_at = now()
+	WHERE id = $1 AND status = $3
+	RETURNING id, title, description, status, cat_id, created_at, updated_at;
+	`
+	var m domain.Mission
+	err := r.db.QueryRowContext(ctx, q, id, newStatus, expected).
+		Scan(
+			&m.ID,
+			&m.Title,
+			&m.Description,
+			&m.Status,
+			&m.CatID,
+			&m.CreatedAt,
+			&m.UpdatedAt,
+		)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.Mission{}, false, nil
+	}
+	if err != nil {
+		return domain.Mission{}, false, err
+	}
+	
+	return m, true, nil
+}

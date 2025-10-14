@@ -21,4 +21,7 @@ var (
 	ErrInvalidCreateMission = errors.New("create mission invalid")
 	ErrInvalidGoalName      = errors.New("goals name is invalid")
 	ErrInvalidCountry       = errors.New("counrty is invalid")
+	ErrInvalidStatus        = errors.New("invalid status")
+	ErrInvalidTransition    = errors.New("invalid transition")
+	ErrConflict             = errors.New("ststus conflict")
 )

@@ -221,3 +221,57 @@ func (h *MissionHandler) GetMissions() gin.HandlerFunc {
 		c.JSON(http.StatusOK, resp)
 	}
 }
+
+// controllers/http/handlers/mission_handler.go
+// @Summary Update mission status
+// @Tags missions
+// @Accept json
+// @Produce json
+// @Param id path int true "Mission ID"
+// @Param body body dto.UpdateMissionStatusRequest true "new status"
+// @Success 200 {object} dto.MissionResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Failure 409 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /missions/{id}/status [patch]
+func (h *MissionHandler) UpdateMissionStatus() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil || id <= 0 {
+			httperror.RespondError(c, http.StatusBadRequest, "invalid_id", "id must be positive integer")
+			return
+		}
+
+		var req dto.UpdateMissionStatusRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			httperror.RespondError(c, http.StatusBadRequest, "invalid_body", err.Error())
+			return
+		}
+
+		st := domain.MissionStatus(req.Status)
+		m, err := h.missionSvc.UpdateStatus(c.Request.Context(), domain.UpdateMissionStatusParams{
+			ID: id, Status: st,
+		})
+
+		if err != nil {
+			switch {
+			case errors.Is(err, serviceerrors.ErrMissionNotFound):
+				httperror.RespondError(c, http.StatusNotFound, "not_found", "mission not found")
+			case errors.Is(err, serviceerrors.ErrInvalidStatus):
+				httperror.RespondError(c, http.StatusBadRequest, "invalid_status", "unknown status")
+			case errors.Is(err, serviceerrors.ErrInvalidTransition):
+				httperror.RespondError(c, http.StatusConflict, "invalid_transition", "status transition is not allowed")
+			case errors.Is(err, serviceerrors.ErrConflict):
+				httperror.RespondError(c, http.StatusConflict, "conflict", "status was changed concurrently")
+			default:
+				httperror.RespondError(c, http.StatusInternalServerError, "internal", "internal server error")
+			}
+
+			return
+		}
+
+		c.JSON(http.StatusOK, dto.ToMissionResponse(m, nil))
+	}
+}

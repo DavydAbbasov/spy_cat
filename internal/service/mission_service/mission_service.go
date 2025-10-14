@@ -16,6 +16,7 @@ type MissionService interface {
 	AssignCat(ctx context.Context, missionID int64, catID *int64) error
 	GetMission(ctx context.Context, id int64) (domain.Mission, []domain.MissionGoal, error)
 	List(ctx context.Context, f domain.MissionFilter) ([]domain.MissionListItem, int, error)
+	UpdateStatus(ctx context.Context, p domain.UpdateMissionStatusParams) (domain.Mission, error)
 }
 type MissionRepository interface {
 	BeginTx(ctx context.Context) (Tx, error)
@@ -25,6 +26,7 @@ type MissionRepository interface {
 	GetMission(ctx context.Context, id int64) (domain.Mission, error)
 	GetMissionGoals(ctx context.Context, missionID int64) ([]domain.MissionGoal, error)
 	ListMissions(ctx context.Context, f domain.MissionFilter) ([]domain.MissionListItem, int, error)
+	UpdateStatusIfCurrent(ctx context.Context, id int64, newStatus, expected domain.MissionStatus) (domain.Mission, bool, error)
 }
 
 type Tx interface {
@@ -157,4 +159,44 @@ func (s *missionService) List(ctx context.Context, f domain.MissionFilter) ([]do
 	}
 
 	return s.repo.ListMissions(ctx, f)
+}
+func (s *missionService) UpdateStatus(ctx context.Context, p domain.UpdateMissionStatusParams) (domain.Mission, error) {
+	if p.ID <= 0 {
+		return domain.Mission{}, serviceerrors.ErrMissionNotFound
+	}
+
+	m, err := s.repo.GetMission(ctx, p.ID)
+	if err != nil {
+		if errors.Is(err, serviceerrors.ErrMissionNotFound) {
+			return domain.Mission{}, serviceerrors.ErrMissionNotFound
+		}
+		return domain.Mission{}, err
+	}
+
+	newStatus := domain.MissionStatus(strings.TrimSpace(string(p.Status)))
+	if newStatus != domain.StatusPlanned && newStatus != domain.StatusActive && newStatus != domain.StatusCompleted {
+		return domain.Mission{}, serviceerrors.ErrInvalidStatus
+	}
+
+	if m.Status == newStatus {
+		return m, nil
+	}
+
+	if !domain.CanTransition(m.Status, newStatus) {
+		return domain.Mission{}, serviceerrors.ErrInvalidTransition
+	}
+
+	updated, ok, err := s.repo.UpdateStatusIfCurrent(ctx,
+		p.ID,
+		newStatus,
+		m.Status,
+	)
+	if err != nil {
+		return domain.Mission{}, err
+	}
+	if !ok {
+		return domain.Mission{}, serviceerrors.ErrConflict
+	}
+
+	return updated, nil
 }
